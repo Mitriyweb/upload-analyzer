@@ -1,0 +1,34 @@
+# Source files
+src/rs/
+src/ts/helpers.ts
+Cargo.toml
+Cargo.lock
+target/
+
+# Development files
+dev/
+scripts/
+public/
+src/ts/examples/
+.git/
+.github/
+
+# Node
+node_modules/
+
+# Build artifacts
+*.wasm.bak
+
+# Config files
+tsconfig.json
+.npmignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Misc
+.DS_Store
+*.log

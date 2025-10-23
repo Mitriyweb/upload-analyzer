@@ -1,0 +1,30 @@
+[package]
+name = "upload-analyzer"
+version = "0.1.0"
+edition = "2021"
+authors = ["Mitriyweb <mitriyweb@gmail.com>"]
+license = "MIT"
+description = "PE file analyzer compiled to WebAssembly"
+repository = "https://github.com/mitriyweb/upload-analyzer"
+
+[lib]
+path = "src/rs/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+goblin = "0.8"
+pelite = "0.10"
+wasm-bindgen = "0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+console_error_panic_hook = "0.1"
+cfb = "0.10"
+
+[dependencies.web-sys]
+version = "0.3"
+features = ["console"]
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1

@@ -1,0 +1,65 @@
+{
+  "name": "upload-analyzer",
+  "version": "0.1.0",
+  "description": "PE/MSI/ELF/Mach-O file analyzer compiled to WebAssembly with TypeScript support",
+  "main": "pkg/upload_analyzer.js",
+  "types": "src/ts/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/ts/types/index.d.ts",
+      "import": "./pkg/upload_analyzer.js",
+      "require": "./pkg/upload_analyzer.js"
+    },
+    "./helpers": {
+      "types": "./dist/helpers.d.ts",
+      "import": "./dist/helpers.js",
+      "require": "./dist/helpers.js"
+    },
+    "./types": "./src/ts/types/index.d.ts"
+  },
+  "files": [
+    "pkg/**/*",
+    "src/ts/types/**/*",
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:wasm && npm run build:types",
+    "build:wasm": "node scripts/wasm-build.js bundler",
+    "build:types": "tsc && mkdir -p dist/types && cp src/ts/types/index.d.ts dist/types/index.d.ts",
+    "build:web": "node scripts/wasm-build.js web",
+    "bundle": "npm run build && cp pkg/upload_analyzer_bg.wasm public/ && node scripts/bundle-single.js",
+    "dev": "npm run build:web && http-server . -p 8888 -c-1 -o /dev/",
+    "serve": "http-server public -p 8888 -c-1",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mitriyweb/upload-analyzer"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "pe",
+    "msi",
+    "elf",
+    "macho",
+    "analyzer",
+    "rust",
+    "binary-analysis",
+    "typescript",
+    "types",
+    "windows-installer",
+    "executable"
+  ],
+  "author": "Mitriyweb <mitriyweb@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "esbuild": "^0.19.0",
+    "http-server": "14.1.0",
+    "terser": "^5.31.0",
+    "typescript": "^5.3.0"
+  }
+}

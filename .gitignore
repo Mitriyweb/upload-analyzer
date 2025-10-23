@@ -1,0 +1,11 @@
+/target
+/pkg
+/node_modules
+/public/app.min.js
+/public/upload_analyzer_bg.wasm
+Cargo.lock
+*.log
+.DS_Store
+package-lock.json
+/dist
+
