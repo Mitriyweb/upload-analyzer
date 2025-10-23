@@ -1,3 +1,4 @@
+/dist
 /target
 /pkg
 /node_modules
@@ -7,5 +8,5 @@ Cargo.lock
 *.log
 .DS_Store
 package-lock.json
-/dist
+
 
