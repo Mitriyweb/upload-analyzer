@@ -73,10 +73,7 @@ fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashM
     
     let msi_data = &buf[msi_offset..];
     
-    // Try to parse MSI metadata from the embedded portion
     if let Ok(msi_meta) = msi::MSIAnalyzer::parse_metadata(msi_data) {
-        // Only copy specific fields from MSI if they don't exist in PE metadata
-        // Prefix them to indicate they come from embedded MSI
         let msi_fields = [
             ("ProductName", "ProductName"),
             ("Manufacturer", "CompanyName"),
@@ -239,7 +236,6 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             }
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
-                            // If CompanyName exists from digital signature, annotate it
                             if let Some(company) = meta.get("CompanyName").cloned() {
                                 if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
                                     meta.insert("CompanyName".into(), format!("{} (from digital signature)", company));
@@ -251,7 +247,6 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                                     }
                                 }
                             }
-                            // Don't add placeholders for missing fields - leave them empty
                         }
                     }
                     Err(e) => {
@@ -361,7 +356,6 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             }
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
-                            // If CompanyName exists from digital signature, annotate it
                             if let Some(company) = meta.get("CompanyName").cloned() {
                                 if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
                                     meta.insert("CompanyName".into(), format!("{} (from digital signature)", company));
@@ -373,7 +367,6 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                                     }
                                 }
                             }
-                            // Don't add placeholders for missing fields - leave them empty
                         }
                     }
                     Err(e) => {

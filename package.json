@@ -1,7 +1,7 @@
 {
   "name": "upload-analyzer",
-  "version": "0.1.1",
-  "description": "PE/MSI file analyzer compiled to WebAssembly with TypeScript support",
+  "version": "0.1.2",
+  "description": "PE/MSI/DMG file analyzer compiled to WebAssembly with TypeScript support",
   "main": "pkg/upload_analyzer.js",
   "types": "src/ts/types/index.d.ts",
   "exports": {
@@ -43,12 +43,14 @@
     "webassembly",
     "pe",
     "msi",
+    "dmg",
     "analyzer",
     "rust",
     "binary-analysis",
     "typescript",
     "types",
     "windows-installer",
+    "apple-disk-image",
     "executable"
   ],
   "author": "Mitriyweb <mitriyweb@gmail.com>",

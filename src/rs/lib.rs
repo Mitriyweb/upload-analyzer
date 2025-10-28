@@ -1,18 +1,14 @@
 mod msi;
 mod pe;
+mod dmg;
 
 use goblin::Object;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use serde_json;
 
-// ========== File Analyzer Trait ==========
-
 pub trait FileAnalyzer {
-    /// Get basic file information (type and size)
     fn get_file_info(data: &[u8]) -> HashMap<String, String>;
-    
-    /// Parse detailed metadata from the file
     fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String>;
 }
 
@@ -25,12 +21,17 @@ fn parse_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
     if msi::is_msi_file(buf) {
         return msi::MSIAnalyzer::parse_metadata(buf);
     }
+    
+   
+    if dmg::is_dmg_file(buf) {
+        return dmg::DMGAnalyzer::parse_metadata(buf);
+    }
 
     let obj = Object::parse(&buf).map_err(|e| format!("Failed to parse file: {}", e))?;
     
     match obj {
         Object::PE(_) => pe::PEAnalyzer::parse_metadata(buf),
-        _ => Err("Unsupported file format. Only PE and MSI files are supported.".to_string())
+        _ => Err("Unsupported file format. Only PE, MSI, and DMG files are supported.".to_string())
     }
 }
 
@@ -46,6 +47,8 @@ pub fn analyze_file(data: &[u8]) -> String {
 pub fn get_file_info(data: &[u8]) -> String {
     let info = if msi::is_msi_file(data) {
         msi::MSIAnalyzer::get_file_info(data)
+    } else if dmg::is_dmg_file(data) {
+        dmg::DMGAnalyzer::get_file_info(data)
     } else if let Ok(obj) = Object::parse(data) {
         match obj {
             Object::PE(_) => pe::PEAnalyzer::get_file_info(data),

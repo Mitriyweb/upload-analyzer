@@ -4,7 +4,7 @@ A WebAssembly-powered binary file analyzer built with Rust.
 
 ## Features
 
-- **Multi-Format Analysis**: PE (Windows), MSI
+- **Multi-Format Analysis**: PE (Windows), MSI (Windows Installer), DMG (Apple Disk Image)
 - **PE Metadata Extraction**: Version info, company, product details, timestamps
 - **32-bit & 64-bit Support**: Handles both x86 and x64 PE files
 - **WebAssembly**: Runs directly in the browser with native Rust performance
@@ -16,8 +16,9 @@ A WebAssembly-powered binary file analyzer built with Rust.
 **Backend:**
 
 - **Rust** - Core analysis engine
-- **goblin** - Multi-format binary parsing (PE, MSI)
+- **goblin** - Multi-format binary parsing (PE)
 - **pelite** - Advanced PE file analysis
+- **cfb** - Compound File Binary format parsing (MSI)
 - **wasm-bindgen** - Rust/JavaScript interop
 
 **Frontend:**
@@ -70,7 +71,8 @@ upload-analyzer/
 │   ├── rs/                # Rust source code
 │   │   ├── lib.rs         # Main Rust entry point
 │   │   ├── pe.rs          # PE file analysis module
-│   │   └── msi.rs         # MSI detection module
+│   │   ├── msi.rs         # MSI file analysis module
+│   │   └── dmg.rs         # DMG file analysis module
 │   │
 │   └── ts/                # TypeScript source code
 │       ├── helpers.ts     # Type guards and parsers (source)

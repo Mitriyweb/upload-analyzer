@@ -119,6 +119,52 @@ export interface MSIAnalysis {
   CompoundFileError?: string;
 }
 
+// ========== DMG File Analysis Types ==========
+
+export interface DMGAnalysis {
+  // Basic Format
+  Format: "DMG";
+  Architecture: "macOS Disk Image";
+  
+  // DMG Information
+  ImageType?: string;
+  Compression?: string;
+  HasKolySignature?: "true" | "false";
+  KolyOffset?: string;
+  DMGVersion?: string;
+  
+  // Product Information (matching PE fields)
+  ProductName?: string;
+  ProgramName?: string;
+  DisplayName?: string;
+  FileDescription?: string;
+  
+  // Version Information (matching PE fields)
+  ProductVersion?: string;
+  FileVersion?: string;
+  FileVersionNumber?: string;
+  ProductVersionNumber?: string;
+  
+  // Company Information (matching PE fields)
+  CompanyName?: string;
+  Manufacturer?: string;
+  Vendor?: string;
+  Publisher?: string;
+  
+  // Legal Information
+  LegalCopyright?: string;
+  
+  // macOS Specific
+  BundleIdentifier?: string;
+  ApplicationBundle?: string;
+  ApplicationCategory?: string;
+  PrincipalClass?: string;
+  ExecutableName?: string;
+  PackageType?: string;
+  IconFile?: string;
+  MinimumSystemVersion?: string;
+}
+
 // ========== Error Response ==========
 
 export interface AnalysisError {
@@ -130,6 +176,7 @@ export interface AnalysisError {
 export type FileAnalysis = 
   | PEAnalysis 
   | MSIAnalysis 
+  | DMGAnalysis
   | AnalysisError;
 
 // ========== WASM Module Interface ==========

@@ -1,4 +1,4 @@
-import init, { analyze_pe_file, get_file_info } from '/pkg/upload_analyzer.js';
+import init, { analyze_file, get_file_info } from '/pkg/upload_analyzer.js';
 
 let wasmInitialized = false;
 const status = document.getElementById('status');
@@ -67,9 +67,9 @@ async function handleFile(file) {
         html += '<h3>Basic Information</h3>';
         html += `<pre>${JSON.stringify(info, null, 2)}</pre>`;
 
-        if (info.type && (info.type.includes('PE') || info.type.includes('MSI'))) {
+        if (info.type && (info.type.includes('PE') || info.type.includes('MSI') || info.type.includes('DMG'))) {
             try {
-                const analysisJson = analyze_pe_file(data);
+                const analysisJson = analyze_file(data);
                 const analysis = JSON.parse(analysisJson);
                 
                 if (analysis.error) {
@@ -106,13 +106,34 @@ async function handleFile(file) {
                         if (analysis.DllCharacteristics) html += `<li><strong>DLL Characteristics:</strong> ${analysis.DllCharacteristics}</li>`;
                         html += '</ul>';
                         
-                        // MSI-specific fields
                         if (analysis.Format === 'MSI') {
                             html += '<h4>MSI Package Information</h4>';
                             html += '<ul>';
                             if (analysis.ProductCode) html += `<li><strong>Product Code:</strong> ${analysis.ProductCode}</li>`;
                             if (analysis.UpgradeCode) html += `<li><strong>Upgrade Code:</strong> ${analysis.UpgradeCode}</li>`;
                             if (analysis.InstallerFramework) html += `<li><strong>⚙️ Created With:</strong> ${analysis.InstallerFramework}</li>`;
+                            html += '</ul>';
+                        }
+                        
+                        if (analysis.Format === 'DMG') {
+                            html += '<h4>DMG Disk Image Information</h4>';
+                            html += '<ul>';
+                            if (analysis.ImageType) html += `<li><strong>Image Type:</strong> ${analysis.ImageType}</li>`;
+                            if (analysis.Compression) html += `<li><strong>Compression:</strong> ${analysis.Compression}</li>`;
+                            if (analysis.HasKolySignature) html += `<li><strong>UDIF Signature:</strong> ${analysis.HasKolySignature === 'true' ? '✓ Present' : '✗ Missing'}</li>`;
+                            if (analysis.DMGVersion) html += `<li><strong>DMG Version:</strong> ${analysis.DMGVersion}</li>`;
+                            html += '</ul>';
+                            
+                            html += '<h4>Application Bundle Information</h4>';
+                            html += '<ul>';
+                            if (analysis.BundleIdentifier) html += `<li><strong>Bundle ID:</strong> ${analysis.BundleIdentifier}</li>`;
+                            if (analysis.ApplicationBundle) html += `<li><strong>Application:</strong> ${analysis.ApplicationBundle}</li>`;
+                            if (analysis.ExecutableName) html += `<li><strong>Executable:</strong> ${analysis.ExecutableName}</li>`;
+                            if (analysis.PackageType) html += `<li><strong>Package Type:</strong> ${analysis.PackageType}</li>`;
+                            if (analysis.ApplicationCategory) html += `<li><strong>📁 Category:</strong> ${analysis.ApplicationCategory}</li>`;
+                            if (analysis.MinimumSystemVersion) html += `<li><strong>Min macOS:</strong> ${analysis.MinimumSystemVersion}</li>`;
+                            if (analysis.IconFile) html += `<li><strong>Icon:</strong> ${analysis.IconFile}</li>`;
+                            if (analysis.PrincipalClass) html += `<li><strong>Principal Class:</strong> ${analysis.PrincipalClass}</li>`;
                             html += '</ul>';
                         }
                         
