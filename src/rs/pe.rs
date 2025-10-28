@@ -2,16 +2,25 @@ use pelite::pe64::{Pe as Pe64, PeFile as PeFile64};
 use pelite::pe32::{Pe as Pe32, PeFile as PeFile32};
 use goblin::pe::PE;
 use std::collections::HashMap;
-use crate::msi;
+use crate::{msi, FileAnalyzer};
 
-pub fn get_file_info(data: &[u8]) -> HashMap<String, String> {
-    let mut info = HashMap::new();
-    info.insert("type".to_string(), "PE (Windows Executable)".to_string());
-    info.insert("size".to_string(), data.len().to_string());
-    info
+pub struct PEAnalyzer;
+
+impl FileAnalyzer for PEAnalyzer {
+    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+        let mut info = HashMap::new();
+        info.insert("type".to_string(), "PE (Windows Executable)".to_string());
+        info.insert("size".to_string(), data.len().to_string());
+        info
+    }
+    
+    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+        let pe = PE::parse(data).map_err(|e| format!("Failed to parse PE file: {}", e))?;
+        parse_pe_metadata(data, &pe)
+    }
 }
 
-pub fn parse_pe_metadata(buf: &[u8], pe: &PE) -> Result<HashMap<String, String>, String> {
+fn parse_pe_metadata(buf: &[u8], pe: &PE) -> Result<HashMap<String, String>, String> {
     let mut meta = HashMap::new();
     
     meta.insert("Format".into(), "PE".into());
@@ -51,8 +60,6 @@ fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
     if let Some(pos) = find_bytes(buf, &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
         meta.insert("EmbeddedMSI".into(), "true".into());
         meta.insert("MSIOffset".into(), pos.to_string());
-        
-        // Extract metadata from embedded MSI
         extract_embedded_msi_metadata(buf, pos, meta);
     }
     
@@ -67,7 +74,7 @@ fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashM
     let msi_data = &buf[msi_offset..];
     
     // Try to parse MSI metadata from the embedded portion
-    if let Ok(msi_meta) = msi::parse_msi_metadata(msi_data) {
+    if let Ok(msi_meta) = msi::MSIAnalyzer::parse_metadata(msi_data) {
         // Only copy specific fields from MSI if they don't exist in PE metadata
         // Prefix them to indicate they come from embedded MSI
         let msi_fields = [
@@ -232,9 +239,7 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             }
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
-                            if !meta.contains_key("ProductName") {
-                                meta.insert("ProductName".into(), "[No Product Name in Version Info]".into());
-                            }
+                            // If CompanyName exists from digital signature, annotate it
                             if let Some(company) = meta.get("CompanyName").cloned() {
                                 if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
                                     meta.insert("CompanyName".into(), format!("{} (from digital signature)", company));
@@ -245,12 +250,8 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                                         meta.insert("Vendor".into(), format!("{} (from digital signature)", vendor));
                                     }
                                 }
-                            } else {
-                                meta.insert("CompanyName".into(), "[No Company Name in Version Info]".into());
                             }
-                            if !meta.contains_key("FileDescription") {
-                                meta.insert("FileDescription".into(), "[No Description in Version Info]".into());
-                            }
+                            // Don't add placeholders for missing fields - leave them empty
                         }
                     }
                     Err(e) => {
@@ -360,9 +361,6 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             }
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
-                            if !meta.contains_key("ProductName") {
-                                meta.insert("ProductName".into(), "[No Product Name in Version Info]".into());
-                            }
                             // If CompanyName exists from digital signature, annotate it
                             if let Some(company) = meta.get("CompanyName").cloned() {
                                 if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
@@ -374,12 +372,8 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                                         meta.insert("Vendor".into(), format!("{} (from digital signature)", vendor));
                                     }
                                 }
-                            } else {
-                                meta.insert("CompanyName".into(), "[No Company Name in Version Info]".into());
                             }
-                            if !meta.contains_key("FileDescription") {
-                                meta.insert("FileDescription".into(), "[No Description in Version Info]".into());
-                            }
+                            // Don't add placeholders for missing fields - leave them empty
                         }
                     }
                     Err(e) => {

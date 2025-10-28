@@ -165,8 +165,6 @@ upload-analyzer/
 ├── src/                    # Rust source code
 │   ├── lib.rs             # Main entry point
 │   ├── pe.rs              # PE file analysis
-│   ├── elf.rs             # ELF file analysis
-│   ├── macho.rs           # Mach-O analysis
 │   └── msi.rs             # MSI detection
 │
 ├── dev/                    # Development demo

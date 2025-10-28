@@ -8,8 +8,6 @@ import type {
   FileAnalysis, 
   PEAnalysis, 
   MSIAnalysis,
-  ELFAnalysis,
-  MachOAnalysis,
   AnalysisError
 } from './types';
 
@@ -21,14 +19,6 @@ export function isPEAnalysis(analysis: FileAnalysis): analysis is PEAnalysis {
 
 export function isMSIAnalysis(analysis: FileAnalysis): analysis is MSIAnalysis {
   return 'Format' in analysis && analysis.Format === 'MSI';
-}
-
-export function isELFAnalysis(analysis: FileAnalysis): analysis is ELFAnalysis {
-  return 'Format' in analysis && analysis.Format === 'ELF';
-}
-
-export function isMachOAnalysis(analysis: FileAnalysis): analysis is MachOAnalysis {
-  return 'Format' in analysis && analysis.Format === 'Mach-O';
 }
 
 export function isAnalysisError(analysis: FileAnalysis): analysis is AnalysisError {

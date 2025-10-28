@@ -119,22 +119,6 @@ export interface MSIAnalysis {
   CompoundFileError?: string;
 }
 
-// ========== ELF File Analysis Types ==========
-
-export interface ELFAnalysis {
-  Format: "ELF";
-  Architecture?: string;
-  [key: string]: string | undefined;
-}
-
-// ========== Mach-O File Analysis Types ==========
-
-export interface MachOAnalysis {
-  Format: "Mach-O";
-  Architecture?: string;
-  [key: string]: string | undefined;
-}
-
 // ========== Error Response ==========
 
 export interface AnalysisError {
@@ -146,8 +130,6 @@ export interface AnalysisError {
 export type FileAnalysis = 
   | PEAnalysis 
   | MSIAnalysis 
-  | ELFAnalysis 
-  | MachOAnalysis 
   | AnalysisError;
 
 // ========== WASM Module Interface ==========
@@ -166,7 +148,7 @@ export interface UploadAnalyzerWASM {
   get_file_info(data: Uint8Array): string;
   
   /**
-   * Analyze PE/MSI/ELF/Mach-O file and extract metadata
+   * Analyze PE/MSI file and extract metadata
    * @param data - File data as Uint8Array
    * @returns JSON string containing detailed metadata
    */

@@ -1,12 +1,20 @@
 mod msi;
 mod pe;
-mod elf;
-mod macho;
 
 use goblin::Object;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use serde_json;
+
+// ========== File Analyzer Trait ==========
+
+pub trait FileAnalyzer {
+    /// Get basic file information (type and size)
+    fn get_file_info(data: &[u8]) -> HashMap<String, String>;
+    
+    /// Parse detailed metadata from the file
+    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String>;
+}
 
 #[wasm_bindgen(start)]
 pub fn init_panic_hook() {
@@ -15,16 +23,14 @@ pub fn init_panic_hook() {
 
 fn parse_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
     if msi::is_msi_file(buf) {
-        return msi::parse_msi_metadata(buf);
+        return msi::MSIAnalyzer::parse_metadata(buf);
     }
 
     let obj = Object::parse(&buf).map_err(|e| format!("Failed to parse file: {}", e))?;
     
     match obj {
-        Object::PE(pe) => pe::parse_pe_metadata(buf, &pe),
-        Object::Elf(elf) => elf::parse_elf_metadata(buf, &elf),
-        Object::Mach(mach) => macho::parse_macho_metadata(&mach),
-        _ => Ok(HashMap::new())
+        Object::PE(_) => pe::PEAnalyzer::parse_metadata(buf),
+        _ => Err("Unsupported file format. Only PE and MSI files are supported.".to_string())
     }
 }
 
@@ -39,15 +45,13 @@ pub fn analyze_file(data: &[u8]) -> String {
 #[wasm_bindgen]
 pub fn get_file_info(data: &[u8]) -> String {
     let info = if msi::is_msi_file(data) {
-        msi::get_file_info(data)
+        msi::MSIAnalyzer::get_file_info(data)
     } else if let Ok(obj) = Object::parse(data) {
         match obj {
-            Object::PE(_) => pe::get_file_info(data),
-            Object::Elf(_) => elf::get_file_info(data),
-            Object::Mach(_) => macho::get_file_info(data),
+            Object::PE(_) => pe::PEAnalyzer::get_file_info(data),
             _ => {
                 let mut info = HashMap::new();
-                info.insert("type".to_string(), "Unknown".to_string());
+                info.insert("type".to_string(), "Unsupported".to_string());
                 info
             }
         }

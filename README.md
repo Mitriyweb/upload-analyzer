@@ -4,7 +4,7 @@ A WebAssembly-powered binary file analyzer built with Rust.
 
 ## Features
 
-- **Multi-Format Analysis**: PE (Windows), ELF (Linux/Unix), Mach-O (macOS), MSI
+- **Multi-Format Analysis**: PE (Windows), MSI
 - **PE Metadata Extraction**: Version info, company, product details, timestamps
 - **32-bit & 64-bit Support**: Handles both x86 and x64 PE files
 - **WebAssembly**: Runs directly in the browser with native Rust performance
@@ -16,7 +16,7 @@ A WebAssembly-powered binary file analyzer built with Rust.
 **Backend:**
 
 - **Rust** - Core analysis engine
-- **goblin** - Multi-format binary parsing (PE, ELF, Mach-O)
+- **goblin** - Multi-format binary parsing (PE, MSI)
 - **pelite** - Advanced PE file analysis
 - **wasm-bindgen** - Rust/JavaScript interop
 
@@ -70,8 +70,6 @@ upload-analyzer/
 │   ├── rs/                # Rust source code
 │   │   ├── lib.rs         # Main Rust entry point
 │   │   ├── pe.rs          # PE file analysis module
-│   │   ├── elf.rs         # ELF file analysis module
-│   │   ├── macho.rs       # Mach-O analysis module
 │   │   └── msi.rs         # MSI detection module
 │   │
 │   └── ts/                # TypeScript source code
