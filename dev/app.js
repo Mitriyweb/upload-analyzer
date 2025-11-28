@@ -63,7 +63,7 @@ async function handleFile(file) {
         html += `<li><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB (${file.size.toLocaleString()} bytes)</li>`;
         html += `<li><strong>Type:</strong> ${info.type || 'Unknown'}</li>`;
         html += '</ul>';
-        
+
         html += '<h3>Basic Information</h3>';
         html += `<pre>${JSON.stringify(info, null, 2)}</pre>`;
 
@@ -71,12 +71,12 @@ async function handleFile(file) {
             try {
                 const analysisJson = analyze_file(data);
                 const analysis = JSON.parse(analysisJson);
-                
+
                 if (analysis.error) {
                     html += `<div class="error">⚠️ Analysis error: ${analysis.error}</div>`;
                 } else {
                     html += '<h3>Binary Metadata</h3>';
-                    
+
                     if (Object.keys(analysis).length === 0) {
                         html += '<p>No metadata found.</p>';
                     } else {
@@ -96,7 +96,7 @@ async function handleFile(file) {
                             html += `<li><strong>Compile Date:</strong> ${date.toUTCString()}</li>`;
                         }
                         html += '</ul>';
-                        
+
                         html += '<h4>Optional Header</h4>';
                         html += '<ul>';
                         if (analysis.EntryPoint) html += `<li><strong>Entry Point:</strong> ${analysis.EntryPoint}</li>`;
@@ -105,7 +105,7 @@ async function handleFile(file) {
                         if (analysis.Subsystem) html += `<li><strong>Subsystem:</strong> ${analysis.Subsystem}</li>`;
                         if (analysis.DllCharacteristics) html += `<li><strong>DLL Characteristics:</strong> ${analysis.DllCharacteristics}</li>`;
                         html += '</ul>';
-                        
+
                         if (analysis.Format === 'MSI') {
                             html += '<h4>MSI Package Information</h4>';
                             html += '<ul>';
@@ -114,7 +114,7 @@ async function handleFile(file) {
                             if (analysis.InstallerFramework) html += `<li><strong>⚙️ Created With:</strong> ${analysis.InstallerFramework}</li>`;
                             html += '</ul>';
                         }
-                        
+
                         if (analysis.Format === 'DMG') {
                             html += '<h4>DMG Disk Image Information</h4>';
                             html += '<ul>';
@@ -123,7 +123,7 @@ async function handleFile(file) {
                             if (analysis.HasKolySignature) html += `<li><strong>UDIF Signature:</strong> ${analysis.HasKolySignature === 'true' ? '✓ Present' : '✗ Missing'}</li>`;
                             if (analysis.DMGVersion) html += `<li><strong>DMG Version:</strong> ${analysis.DMGVersion}</li>`;
                             html += '</ul>';
-                            
+
                             html += '<h4>Application Bundle Information</h4>';
                             html += '<ul>';
                             if (analysis.BundleIdentifier) html += `<li><strong>Bundle ID:</strong> ${analysis.BundleIdentifier}</li>`;
@@ -136,7 +136,7 @@ async function handleFile(file) {
                             if (analysis.PrincipalClass) html += `<li><strong>Principal Class:</strong> ${analysis.PrincipalClass}</li>`;
                             html += '</ul>';
                         }
-                        
+
                         html += '<h4>Version Information</h4>';
                         html += '<ul>';
                         if (analysis.FileVersionNumber) html += `<li><strong>File Version (Binary):</strong> ${analysis.FileVersionNumber}</li>`;
@@ -162,7 +162,7 @@ async function handleFile(file) {
                         if (analysis.FileOS) html += `<li><strong>File OS:</strong> ${analysis.FileOS}</li>`;
                         if (analysis.FileFlags) html += `<li><strong>File Flags:</strong> ${analysis.FileFlags}</li>`;
                         html += '</ul>';
-                        
+
                         html += '<h3>Complete JSON Data</h3>';
                         html += `<pre>${JSON.stringify(analysis, null, 2)}</pre>`;
                     }

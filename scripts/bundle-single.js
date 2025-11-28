@@ -10,15 +10,20 @@ const appPath = path.join(__dirname, '../dev/app.js');
 let app = fs.readFileSync(appPath, 'utf-8');
 
 // Remove the import line from app.js
-app = app.replace(/^import.*from.*['"].*['"];?\s*$/m, '');
+app = app.replace(/^import.*from.*['\"].*['\"];?\\s*$/m, '');
 
-// Modify wrapper to export what we need
-wrapper = wrapper.replace(/export { initSync }/g, '');
-wrapper = wrapper.replace(/export default init;/g, '');
+// The wrapper already has init, analyze_file, and get_file_info defined
+// We just need to make sure they're accessible in the bundle
 
-// Create the bundle
+// Create the bundle - keep the wrapper as-is, just remove the export statements
+// and make the functions available globally
 const bundle = `
 ${wrapper}
+
+// Expose WASM functions globally for the app code
+window.init = init;
+window.analyze_file = analyze_file;
+window.get_file_info = get_file_info;
 
 // App code
 ${app}
@@ -35,15 +40,15 @@ console.log(`   Size: ${(bundle.length / 1024).toFixed(2)} KB`);
 const { execSync } = require('child_process');
 try {
     execSync('npx terser public/app.bundle.js -o public/app.min.js -c -m --module', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
-    
+
     // Fix the wasm path in minified version
     let minified = fs.readFileSync(path.join(__dirname, '../public/app.min.js'), 'utf-8');
     minified = minified.replace(/['"]upload_analyzer_bg\.wasm['"]/g, '"./upload_analyzer_bg.wasm"');
     fs.writeFileSync(path.join(__dirname, '../public/app.min.js'), minified);
-    
+
     // Remove the bundle source
     fs.unlinkSync(outputPath);
-    
+
     console.log('✅ Created public/app.min.js (minified)');
 } catch (error) {
     console.error('Error minifying:', error.message);

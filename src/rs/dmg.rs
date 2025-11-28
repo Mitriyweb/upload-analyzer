@@ -3,6 +3,11 @@ use std::io::Cursor;
 use crate::FileAnalyzer;
 use plist::Value;
 
+// Constants for DMG file analysis
+const DMG_KOLY_SIGNATURE: &[u8] = b"koly";
+const DMG_KOLY_OFFSET_SIZE: usize = 512;
+const MIN_DMG_SIZE: usize = 512;
+
 pub struct DMGAnalyzer;
 
 impl FileAnalyzer for DMGAnalyzer {
@@ -19,20 +24,20 @@ impl FileAnalyzer for DMGAnalyzer {
 }
 
 pub fn is_dmg_file(data: &[u8]) -> bool {
-    if data.len() < 512 {
+    if data.len() < MIN_DMG_SIZE {
         return false;
     }
     
-    if data.len() >= 512 {
-        let end_offset = data.len() - 512;
+    if data.len() >= DMG_KOLY_OFFSET_SIZE {
+        let end_offset = data.len() - DMG_KOLY_OFFSET_SIZE;
         
-        if &data[end_offset..end_offset + 4] == b"koly" {
+        if &data[end_offset..end_offset + 4] == DMG_KOLY_SIGNATURE {
             return true;
         }
     }
     
-    if data.len() >= 4 {
-        if data[0..4] == [0x78, 0x01, 0x73, 0x0D] ||
+    if data.len() >= 4
+        && (data[0..4] == [0x78, 0x01, 0x73, 0x0D] ||
            data[0..4] == [0x78, 0x9C, 0xEC, 0xBD] ||
            data[0..4] == [0x78, 0x9C, 0x00, 0x00] ||
            data[0..2] == [0x78, 0x01] ||
@@ -41,12 +46,12 @@ pub fn is_dmg_file(data: &[u8]) -> bool {
            data[0..2] == [0x78, 0xDA] ||
            data[0..2] == [0x1F, 0x8B] ||
            data[0..4] == [0x42, 0x5A, 0x68, 0x39] ||
-           data[0..4] == [0x42, 0x5A, 0x68, 0x31] {
-            if data.len() >= 512 {
-                let end_offset = data.len() - 512;
-                if &data[end_offset..end_offset + 4] == b"koly" {
-                    return true;
-                }
+           data[0..4] == [0x42, 0x5A, 0x68, 0x31])
+    {
+        if data.len() >= DMG_KOLY_OFFSET_SIZE {
+            let end_offset = data.len() - DMG_KOLY_OFFSET_SIZE;
+            if &data[end_offset..end_offset + 4] == DMG_KOLY_SIGNATURE {
+                return true;
             }
         }
     }
@@ -174,6 +179,7 @@ fn find_plist_in_region(data: &[u8]) -> Option<Vec<u8>> {
     None
 }
 
+#[inline]
 fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|window| window == needle)
 }
@@ -203,15 +209,15 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
         ];
         
         for (plist_key, meta_key) in &keys_to_extract {
-            if let Some(Value::String(s)) = dict.get(*plist_key) {
+            if let Some(Value::String(s)) = dict.get(plist_key) {
                 let value = s.trim();
                 if !value.is_empty() {
                     if *meta_key == "ApplicationCategory" {
                         let clean = value
-                            .split('.').last().unwrap_or(value)
+                            .split('.').next_back().unwrap_or(value)
                             .replace("-", " ")
                             .split_whitespace()
-                            .map(|w| capitalize_first(w))
+                            .map(capitalize_first)
                             .collect::<Vec<_>>()
                             .join(" ");
                         meta.insert(meta_key.to_string(), clean);
@@ -235,7 +241,7 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
                 let parts: Vec<&str> = bundle_id.split('.').collect();
                 if parts.len() >= 2 {
                     let company = parts[1];
-                    if company.len() > 0 && company.chars().all(|c| c.is_alphanumeric()) {
+                    if !company.is_empty() && company.chars().all(|c| c.is_alphanumeric()) {
                         meta.insert("CompanyName".into(), capitalize_first(company));
                     }
                 }
@@ -249,7 +255,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let name = &data_str[start + value_start + 8..start + value_start + value_end];
-                if name.len() > 0 && name.len() < 100 {
+                if !name.is_empty() && name.len() < 100 {
                     meta.insert("ProductName".into(), name.trim().to_string());
                 }
             }
@@ -260,7 +266,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let name = &data_str[start + value_start + 8..start + value_start + value_end];
-                if name.len() > 0 && name.len() < 100 {
+                if !name.is_empty() && name.len() < 100 {
                     if !meta.contains_key("ProductName") {
                         meta.insert("ProductName".into(), name.trim().to_string());
                     }
@@ -274,7 +280,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let version = &data_str[start + value_start + 8..start + value_start + value_end];
-                if version.len() > 0 && version.len() < 50 {
+                if !version.is_empty() && version.len() < 50 {
                     meta.insert("ProductVersion".into(), version.trim().to_string());
                     meta.insert("FileVersion".into(), version.trim().to_string());
                 }
@@ -287,7 +293,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             if let Some(value_start) = data_str[start..].find("<string>") {
                 if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                     let version = &data_str[start + value_start + 8..start + value_start + value_end];
-                    if version.len() > 0 && version.len() < 50 {
+                    if !version.is_empty() && version.len() < 50 {
                         meta.insert("ProductVersion".into(), version.trim().to_string());
                         meta.insert("FileVersion".into(), version.trim().to_string());
                         meta.insert("FileVersionNumber".into(), version.trim().to_string());
@@ -301,7 +307,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let copyright = &data_str[start + value_start + 8..start + value_start + value_end];
-                if copyright.len() > 0 && copyright.len() < 200 {
+                if !copyright.is_empty() && copyright.len() < 200 {
                     meta.insert("LegalCopyright".into(), copyright.trim().to_string());
                 }
             }
@@ -312,7 +318,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let info = &data_str[start + value_start + 8..start + value_start + value_end];
-                if info.len() > 0 && info.len() < 200 {
+                if !info.is_empty() && info.len() < 200 {
                     meta.insert("FileDescription".into(), info.trim().to_string());
                 }
             }
@@ -323,13 +329,13 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let category = &data_str[start + value_start + 8..start + value_start + value_end];
-                if category.len() > 0 && category.len() < 100 {
+                if !category.is_empty() && category.len() < 100 {
                     let clean_category = category
                         .trim()
-                        .split('.').last().unwrap_or(category)
+                        .split('.').next_back().unwrap_or(category)
                         .replace("-", " ")
                         .split_whitespace()
-                        .map(|word| capitalize_first(word))
+                        .map(capitalize_first)
                         .collect::<Vec<_>>()
                         .join(" ");
                     meta.insert("ApplicationCategory".into(), clean_category);
@@ -342,7 +348,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let principal_class = &data_str[start + value_start + 8..start + value_start + value_end];
-                if principal_class.len() > 0 && principal_class.len() < 100 {
+                if !principal_class.is_empty() && principal_class.len() < 100 {
                     meta.insert("PrincipalClass".into(), principal_class.trim().to_string());
                 }
             }
@@ -356,7 +362,7 @@ fn extract_version_strings(data_str: &str, meta: &mut HashMap<String, String>) {
             let after_version = &data_str[pos + 8..];
             if let Some(end) = after_version.find(|c: char| !c.is_numeric() && c != '.') {
                 let version_str = &after_version[..end];
-                if version_str.len() > 0 && version_str.chars().all(|c| c.is_numeric() || c == '.') && version_str.contains('.') {
+                if !version_str.is_empty() && version_str.chars().all(|c| c.is_numeric() || c == '.') && version_str.contains('.') {
                     meta.insert("ProductVersion".into(), version_str.to_string());
                     meta.insert("FileVersion".into(), version_str.to_string());
                 }
@@ -370,14 +376,14 @@ fn extract_bundle_info(data_str: &str, meta: &mut HashMap<String, String>) {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
                 let bundle_id = &data_str[start + value_start + 8..start + value_start + value_end];
-                if bundle_id.len() > 0 && bundle_id.len() < 200 {
+                if !bundle_id.is_empty() && bundle_id.len() < 200 {
                     meta.insert("BundleIdentifier".into(), bundle_id.trim().to_string());
                     
                     if !meta.contains_key("CompanyName") {
                         let parts: Vec<&str> = bundle_id.split('.').collect();
                         if parts.len() >= 2 {
                             let company = parts[1];
-                            if company.len() > 0 && company.chars().all(|c| c.is_alphanumeric()) {
+                            if !company.is_empty() && company.chars().all(|c| c.is_alphanumeric()) {
                                 let company_name = capitalize_first(company);
                                 meta.insert("CompanyName".into(), company_name.clone());
                                 meta.insert("Manufacturer".into(), company_name);
@@ -413,7 +419,7 @@ fn extract_developer_info(data_str: &str, meta: &mut HashMap<String, String>) {
                     let cleaned = after_copyright
                         .trim_start_matches(|c: char| c.is_numeric() || c == '©' || c == '(' || c == ')' || c == '-' || c.is_whitespace());
                     
-                    if let Some(company_end) = cleaned.find(|c: char| c == '\n' || c == '\0' || c == '.') {
+                    if let Some(company_end) = cleaned.find(['\n', '\0', '.']) {
                         let company = &cleaned[..company_end];
                         if company.len() > 2 && company.len() < 100 && !meta.contains_key("CompanyName") {
                             meta.insert("CompanyName".into(), company.trim().to_string());
@@ -464,7 +470,7 @@ fn extract_app_names(data: &[u8], meta: &mut HashMap<String, String>) {
         let skip_patterns = ["http", "www", "https", "ftp", "com.", "org.", ".app", "plist", "xml"];
         
         for &byte in &data[..search_limit] {
-            if byte >= 32 && byte <= 126 {
+            if (32..=126).contains(&byte) {
                 current_string.push(byte as char);
             } else if !current_string.is_empty() {
                 if current_string.len() >= 5 && current_string.len() <= 100 {

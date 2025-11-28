@@ -5,7 +5,6 @@ mod dmg;
 use goblin::Object;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
-use serde_json;
 
 pub trait FileAnalyzer {
     fn get_file_info(data: &[u8]) -> HashMap<String, String>;
@@ -27,7 +26,7 @@ fn parse_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
         return dmg::DMGAnalyzer::parse_metadata(buf);
     }
 
-    let obj = Object::parse(&buf).map_err(|e| format!("Failed to parse file: {}", e))?;
+    let obj = Object::parse(buf).map_err(|e| format!("Failed to parse file: {}", e))?;
     
     match obj {
         Object::PE(_) => pe::PEAnalyzer::parse_metadata(buf),

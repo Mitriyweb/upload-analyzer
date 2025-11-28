@@ -4,6 +4,22 @@ use goblin::pe::PE;
 use std::collections::HashMap;
 use crate::{msi, FileAnalyzer};
 
+// Constants for magic numbers and patterns
+const MSI_SIGNATURE: &[u8] = &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+
+// Installer type patterns
+const PATTERN_INNO_SETUP: &[u8] = b"Inno Setup";
+const PATTERN_INNO_VERSION: &[u8] = b"InnoSetupVersion";
+const PATTERN_NSIS: &[u8] = b"Nullsoft Install System";
+const PATTERN_NSIS_HEADER: &[u8] = b"NSIS.Header";
+const PATTERN_WINDOWS_INSTALLER: &[u8] = b"Windows Installer";
+const PATTERN_INSTALLSHIELD: &[u8] = b"InstallShield";
+const PATTERN_WIX: &[u8] = b"WiX Toolset";
+const PATTERN_WIX_XML: &[u8] = b"Windows Installer XML";
+const PATTERN_WISE: &[u8] = b"Wise Installation System";
+const PATTERN_SETUP_FACTORY: &[u8] = b"Setup Factory";
+const PATTERN_SMART_INSTALL: &[u8] = b"Smart Install Maker";
+
 pub struct PEAnalyzer;
 
 impl FileAnalyzer for PEAnalyzer {
@@ -39,27 +55,32 @@ fn parse_pe_metadata(buf: &[u8], pe: &PE) -> Result<HashMap<String, String>, Str
 }
 
 fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
-    let buf_str = String::from_utf8_lossy(buf);
+    // Helper to check if a pattern exists in buffer
+    let contains_pattern = |pattern: &[u8]| -> bool {
+        find_bytes(buf, pattern).is_some()
+    };
     
-    if buf_str.contains("Inno Setup") || buf_str.contains("InnoSetupVersion") {
-        meta.insert("InstallerType".into(), "Inno Setup".into());
-    } else if buf_str.contains("Nullsoft Install System") || buf_str.contains("NSIS.Header") {
-        meta.insert("InstallerType".into(), "NSIS (Nullsoft)".into());
-    } else if buf_str.contains("Windows Installer") || buf_str.contains("InstallShield") {
-        meta.insert("InstallerType".into(), "InstallShield".into());
-    } else if buf_str.contains("WiX Toolset") || buf_str.contains("Windows Installer XML") {
-        meta.insert("InstallerType".into(), "WiX Toolset".into());
-    } else if buf_str.contains("Wise Installation System") {
-        meta.insert("InstallerType".into(), "Wise Installer".into());
-    } else if buf_str.contains("Setup Factory") {
-        meta.insert("InstallerType".into(), "Setup Factory".into());
-    } else if buf_str.contains("Smart Install Maker") {
-        meta.insert("InstallerType".into(), "Smart Install Maker".into());
+    // Check installer patterns efficiently without converting to String
+    if contains_pattern(PATTERN_INNO_SETUP) || contains_pattern(PATTERN_INNO_VERSION) {
+        meta.insert("InstallerType".to_string(), "Inno Setup".to_string());
+    } else if contains_pattern(PATTERN_NSIS) || contains_pattern(PATTERN_NSIS_HEADER) {
+        meta.insert("InstallerType".to_string(), "NSIS (Nullsoft)".to_string());
+    } else if contains_pattern(PATTERN_WINDOWS_INSTALLER) || contains_pattern(PATTERN_INSTALLSHIELD) {
+        meta.insert("InstallerType".to_string(), "InstallShield".to_string());
+    } else if contains_pattern(PATTERN_WIX) || contains_pattern(PATTERN_WIX_XML) {
+        meta.insert("InstallerType".to_string(), "WiX Toolset".to_string());
+    } else if contains_pattern(PATTERN_WISE) {
+        meta.insert("InstallerType".to_string(), "Wise Installer".to_string());
+    } else if contains_pattern(PATTERN_SETUP_FACTORY) {
+        meta.insert("InstallerType".to_string(), "Setup Factory".to_string());
+    } else if contains_pattern(PATTERN_SMART_INSTALL) {
+        meta.insert("InstallerType".to_string(), "Smart Install Maker".to_string());
     }
     
-    if let Some(pos) = find_bytes(buf, &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
-        meta.insert("EmbeddedMSI".into(), "true".into());
-        meta.insert("MSIOffset".into(), pos.to_string());
+    // Check for embedded MSI
+    if let Some(pos) = find_bytes(buf, MSI_SIGNATURE) {
+        meta.insert("EmbeddedMSI".to_string(), "true".to_string());
+        meta.insert("MSIOffset".to_string(), pos.to_string());
         extract_embedded_msi_metadata(buf, pos, meta);
     }
     
@@ -110,7 +131,7 @@ fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
             
             let mut text_end = 0;
             for (i, &byte) in candidate.iter().enumerate() {
-                if byte == b',' || byte == 0 || byte < 32 || byte > 126 {
+                if byte == b',' || byte == 0 || !(32..=126).contains(&byte) {
                     break;
                 }
                 text_end = i + 1;
@@ -137,6 +158,7 @@ fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
     }
 }
 
+#[inline]
 fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|window| window == needle)
 }
@@ -152,7 +174,7 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
         meta.insert("PointerToSymbolTable".into(), header.PointerToSymbolTable.to_string());
         meta.insert("NumberOfSymbols".into(), header.NumberOfSymbols.to_string());
         
-        if let Some(timestamp) = header.TimeDateStamp.to_string().parse::<i64>().ok() {
+        if let Ok(timestamp) = header.TimeDateStamp.to_string().parse::<i64>() {
             if timestamp > 0 {
                 meta.insert("Timestamp".into(), timestamp.to_string());
             }
@@ -272,7 +294,7 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
         meta.insert("PointerToSymbolTable".into(), header.PointerToSymbolTable.to_string());
         meta.insert("NumberOfSymbols".into(), header.NumberOfSymbols.to_string());
         
-        if let Some(timestamp) = header.TimeDateStamp.to_string().parse::<i64>().ok() {
+        if let Ok(timestamp) = header.TimeDateStamp.to_string().parse::<i64>() {
             if timestamp > 0 {
                 meta.insert("Timestamp".into(), timestamp.to_string());
             }

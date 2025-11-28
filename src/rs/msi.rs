@@ -3,6 +3,12 @@ use std::io::Cursor;
 use cfb::CompoundFile;
 use crate::FileAnalyzer;
 
+// Constants for MSI file analysis
+const MSI_SIGNATURE: &[u8] = &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+const MIN_MSI_SIGNATURE_SIZE: usize = 8;
+const MIN_METADATA_STRING_LEN: usize = 3;
+const MAX_METADATA_STRING_LEN: usize = 100;
+
 pub struct MSIAnalyzer;
 
 impl FileAnalyzer for MSIAnalyzer {
@@ -19,7 +25,7 @@ impl FileAnalyzer for MSIAnalyzer {
 }
 
 pub fn is_msi_file(data: &[u8]) -> bool {
-    data.len() >= 8 && data[0..8] == [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]
+    data.len() >= MIN_MSI_SIGNATURE_SIZE && &data[0..MIN_MSI_SIGNATURE_SIZE] == MSI_SIGNATURE
 }
 
 fn parse_msi_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
@@ -105,7 +111,7 @@ fn extract_string_from_buffer(buffer: &[u8], meta: &mut HashMap<String, String>,
 }
 
 fn is_valid_metadata_string(s: &str) -> bool {
-    if s.len() < 3 || s.len() > 100 {
+    if s.len() < MIN_METADATA_STRING_LEN || s.len() > MAX_METADATA_STRING_LEN {
         return false;
     }
     
@@ -197,7 +203,7 @@ fn extract_property_value(buf: &[u8], property_name: &[u8]) -> Option<String> {
         let mut in_string = false;
         
         for &byte in search_area {
-            if byte >= 32 && byte <= 126 && byte != b'\\' {
+            if (32..=126).contains(&byte) && byte != b'\\' {
                 found_string.push(byte as char);
                 in_string = true;
             } else if in_string && found_string.len() >= 3 {
@@ -215,6 +221,7 @@ fn extract_property_value(buf: &[u8], property_name: &[u8]) -> Option<String> {
     None
 }
 
+#[inline]
 fn find_bytes(haystack: &[u8], needle: &[u8]) -> Option<usize> {
     haystack.windows(needle.len()).position(|window| window == needle)
 }
@@ -226,8 +233,8 @@ fn extract_guid(data: &str, _prefix: &str) -> Option<String> {
 
 fn regex_like_guid_search(data: &[u8]) -> Option<String> {
     for i in 0..data.len().saturating_sub(38) {
-        if data[i] == b'{' && data[i + 37] == b'}' {
-            if data[i + 9] == b'-' && data[i + 14] == b'-' && 
+        if data[i] == b'{' && data[i + 37] == b'}'
+            && data[i + 9] == b'-' && data[i + 14] == b'-' && 
                data[i + 19] == b'-' && data[i + 24] == b'-' {
                 if let Ok(guid) = std::str::from_utf8(&data[i..i+38]) {
                     if guid.chars().all(|c| c.is_ascii_hexdigit() || c == '{' || c == '}' || c == '-') {
@@ -235,7 +242,6 @@ fn regex_like_guid_search(data: &[u8]) -> Option<String> {
                     }
                 }
             }
-        }
     }
     None
 }
@@ -258,11 +264,10 @@ fn extract_version_pattern(data: &str) -> Option<String> {
             }
             
             let parts: Vec<&str> = version.split('.').collect();
-            if parts.len() >= 2 && parts.len() <= 4 {
-                if parts.iter().all(|p| !p.is_empty() && p.parse::<u32>().is_ok()) {
+            if parts.len() >= 2 && parts.len() <= 4
+                && parts.iter().all(|p| !p.is_empty() && p.parse::<u32>().is_ok()) {
                     return Some(version);
                 }
-            }
         }
     }
     
@@ -332,10 +337,9 @@ fn extract_creation_date(cfb: &mut CompoundFile<Cursor<&[u8]>>, meta: &mut HashM
     
     if let Ok(mut stream) = cfb.open_stream("\u{0005}SummaryInformation") {
         let mut buffer = Vec::new();
-        if stream.read_to_end(&mut buffer).is_ok() {
-            if buffer.len() >= 48 {
+        if stream.read_to_end(&mut buffer).is_ok()
+            && buffer.len() >= 48 {
                 meta.insert("HasTimestamp".into(), "true".into());
             }
-        }
     }
 }
