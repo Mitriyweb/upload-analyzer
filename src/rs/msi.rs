@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 use std::io::Cursor;
 use cfb::CompoundFile;
-use crate::FileAnalyzer;
+use crate::{FileAnalyzer, MetadataResult};
 
 // Constants for MSI file analysis
 const MSI_SIGNATURE: &[u8] = &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
 const MIN_MSI_SIGNATURE_SIZE: usize = 8;
 const MIN_METADATA_STRING_LEN: usize = 3;
 const MAX_METADATA_STRING_LEN: usize = 100;
+
+// Type alias to reduce complexity
+type CfbFile<'a> = CompoundFile<Cursor<&'a [u8]>>;
 
 pub struct MSIAnalyzer;
 
@@ -19,7 +22,7 @@ impl FileAnalyzer for MSIAnalyzer {
         info
     }
     
-    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    fn parse_metadata(data: &[u8]) -> MetadataResult {
         parse_msi_metadata(data)
     }
 }
@@ -28,7 +31,7 @@ pub fn is_msi_file(data: &[u8]) -> bool {
     data.len() >= MIN_MSI_SIGNATURE_SIZE && &data[0..MIN_MSI_SIGNATURE_SIZE] == MSI_SIGNATURE
 }
 
-fn parse_msi_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
+fn parse_msi_metadata(buf: &[u8]) -> MetadataResult {
     let mut meta = HashMap::new();
     
     meta.insert("Format".into(), "MSI".into());
@@ -56,7 +59,7 @@ fn parse_msi_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
     Ok(meta)
 }
 
-fn extract_summary_info(cfb: &mut CompoundFile<Cursor<&[u8]>>, meta: &mut HashMap<String, String>) {
+fn extract_summary_info(cfb: &mut CfbFile, meta: &mut HashMap<String, String>) {
     if let Ok(mut stream) = cfb.open_stream("\u{0005}SummaryInformation") {
         use std::io::Read;
         let mut buffer = Vec::new();
@@ -307,7 +310,7 @@ fn extract_msi_version_info(meta: &mut HashMap<String, String>) {
     }
 }
 
-fn extract_language_from_summary(cfb: &mut CompoundFile<Cursor<&[u8]>>, meta: &mut HashMap<String, String>) {
+fn extract_language_from_summary(cfb: &mut CfbFile, meta: &mut HashMap<String, String>) {
     use std::io::Read;
     
     if let Ok(mut stream) = cfb.open_stream("\u{0005}SummaryInformation") {
@@ -332,7 +335,7 @@ fn extract_language_from_summary(cfb: &mut CompoundFile<Cursor<&[u8]>>, meta: &m
     }
 }
 
-fn extract_creation_date(cfb: &mut CompoundFile<Cursor<&[u8]>>, meta: &mut HashMap<String, String>) {
+fn extract_creation_date(cfb: &mut CfbFile, meta: &mut HashMap<String, String>) {
     use std::io::Read;
     
     if let Ok(mut stream) = cfb.open_stream("\u{0005}SummaryInformation") {

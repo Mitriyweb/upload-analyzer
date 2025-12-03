@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::io::Cursor;
-use crate::FileAnalyzer;
+use crate::{FileAnalyzer, MetadataResult};
 use plist::Value;
 
 // Constants for DMG file analysis
@@ -18,7 +18,7 @@ impl FileAnalyzer for DMGAnalyzer {
         info
     }
     
-    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    fn parse_metadata(data: &[u8]) -> MetadataResult {
         parse_dmg_metadata(data)
     }
 }
@@ -58,7 +58,7 @@ pub fn is_dmg_file(data: &[u8]) -> bool {
     false
 }
 
-fn parse_dmg_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+fn parse_dmg_metadata(data: &[u8]) -> MetadataResult {
     let mut meta = HashMap::new();
     
     meta.insert("Format".into(), "DMG".into());

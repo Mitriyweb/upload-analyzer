@@ -6,9 +6,12 @@ use goblin::Object;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
+// Type alias to reduce complexity and improve readability
+pub type MetadataResult = Result<HashMap<String, String>, String>;
+
 pub trait FileAnalyzer {
     fn get_file_info(data: &[u8]) -> HashMap<String, String>;
-    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String>;
+    fn parse_metadata(data: &[u8]) -> MetadataResult;
 }
 
 #[wasm_bindgen(start)]
@@ -16,7 +19,7 @@ pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
 }
 
-fn parse_metadata(buf: &[u8]) -> Result<HashMap<String, String>, String> {
+fn parse_metadata(buf: &[u8]) -> MetadataResult {
     if msi::is_msi_file(buf) {
         return msi::MSIAnalyzer::parse_metadata(buf);
     }

@@ -122,24 +122,167 @@ if data.len() >= 8 && &data[0..8] == &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A,
 }
 ```
 
-### Type Safety
+### No Generic Types
 
-**Leverage Rust's type system:**
+**CRITICAL: Do not use generic types (`<T>`) in this project**
+
+Generics increase WASM bundle size and compilation complexity. Always use concrete types.
 
 ```rust
-// ✅ CORRECT - Type-safe with trait
-pub trait FileAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String>;
-    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String>;
+// ❌ FORBIDDEN - Generic function
+fn parse_data<T: Deserialize>(data: &[u8]) -> Result<T, String> {
+    serde_json::from_slice(data).map_err(|e| e.to_string())
 }
 
-// ✅ CORRECT - Newtype pattern for clarity
-struct ProductCode(String);
-struct UpgradeCode(String);
+fn process<T: Clone>(item: T) -> T {
+    item.clone()
+}
 
-// ❌ WRONG - Stringly-typed data
-fn process(code_type: &str, code: String) { /* ... */ }
+// ✅ CORRECT - Concrete types
+fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    serde_json::from_slice(data).map_err(|e| e.to_string())
+}
+
+fn process_string(item: &str) -> String {
+    item.to_string()
+}
+
+// ❌ FORBIDDEN - Generic struct
+struct Container<T> {
+    value: T,
+}
+
+// ✅ CORRECT - Concrete struct
+struct MetadataContainer {
+    value: HashMap<String, String>,
+}
+
+// ❌ FORBIDDEN - Generic trait implementation
+impl<T: Display> FileAnalyzer for GenericAnalyzer<T> {
+    // ...
+}
+
+// ✅ CORRECT - Concrete trait implementation
+impl FileAnalyzer for PEAnalyzer {
+    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+        // concrete implementation
+    }
+}
 ```
+
+**Why no generics?**
+- Increases WASM bundle size (each generic instantiation = more code)
+- Complicates compilation and optimization
+- Not needed for this project's scope
+- Concrete types are clearer and more maintainable
+
+**Use type aliases for complex types:**
+
+```rust
+// ✅ CORRECT - Type alias for common pattern
+pub type MetadataResult = Result<HashMap<String, String>, String>;
+type CfbFile<'a> = CompoundFile<Cursor<&'a [u8]>>;
+
+fn parse_metadata(data: &[u8]) -> MetadataResult {
+    // Clean and readable
+}
+
+fn extract_summary(cfb: &mut CfbFile) {
+    // Much better than CompoundFile<Cursor<&[u8]>>
+}
+
+// ❌ WRONG - Inline complex types
+fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    // Verbose and triggers type_complexity lint
+}
+```
+
+**Enforcement:**
+- `type_complexity` lint denies complex types
+- Threshold set to 100 (very low) to catch generic usage
+- Manual code review for any `<T>` syntax
+- Use type aliases to simplify complex concrete types
+
+### No Concurrency Primitives
+
+**CRITICAL: Do not use concurrency in this project**
+
+WASM runs in a single-threaded environment. Concurrency primitives don't work and add unnecessary complexity.
+
+```rust
+// ❌ FORBIDDEN - Arc and Mutex (no multi-threading in WASM)
+use std::sync::{Arc, Mutex};
+
+fn process_shared(data: Arc<Mutex<Vec<u8>>>) {
+    // This doesn't make sense in WASM - no threads!
+    let mut d = data.lock().unwrap();
+    d.push(1);
+}
+
+// ✅ CORRECT - Direct ownership
+fn process_data(data: &mut Vec<u8>) {
+    // Simple and clear
+    data.push(1);
+}
+
+// ❌ FORBIDDEN - thread::spawn (doesn't work in WASM)
+use std::thread;
+
+fn process_async(data: Vec<u8>) {
+    thread::spawn(move || {
+        // This will fail in WASM!
+        analyze(data);
+    });
+}
+
+// ✅ CORRECT - Synchronous processing
+fn process_sync(data: &[u8]) -> MetadataResult {
+    // Direct, synchronous call
+    parse_metadata(data)
+}
+
+// ❌ FORBIDDEN - async/await (unnecessary overhead in WASM)
+async fn analyze_async(data: &[u8]) -> MetadataResult {
+    // WASM doesn't benefit from async
+    // Just adds complexity and bundle size
+    parse_metadata(data)
+}
+
+// ✅ CORRECT - Synchronous function
+fn analyze(data: &[u8]) -> MetadataResult {
+    // Clean, simple, fast
+    parse_metadata(data)
+}
+
+// ❌ FORBIDDEN - Channels (no concurrent receivers in WASM)
+use std::sync::mpsc;
+
+fn use_channels() {
+    let (tx, rx) = mpsc::channel();
+    // No threads to receive from!
+}
+
+// ✅ CORRECT - Direct function calls
+fn process_pipeline(data: &[u8]) -> MetadataResult {
+    let step1 = parse_metadata(data)?;
+    let step2 = enrich_metadata(step1)?;
+    Ok(step2)
+}
+```
+
+**Why no concurrency?**
+- WASM is single-threaded - no actual parallelism
+- Arc/Mutex add overhead without benefit
+- async/await increases bundle size
+- Synchronous code is simpler and faster in WASM
+- JavaScript handles async at the boundary
+
+**Enforcement:**
+- `future_not_send` - denies async futures
+- `await_holding_lock` - denies mutex usage with await
+- `await_holding_refcell_ref` - denies RefCell issues
+- `mutex_atomic` - denies mutex (suggests atomics, but we don't use either!)
+- Manual code review for `Arc`, `Mutex`, `thread::`, `async`
 
 ### Inline Optimization
 
@@ -171,6 +314,8 @@ pub fn is_msi_file(data: &[u8]) -> bool {
 6. **`.to_string()` in hot paths** - Causes allocations; use `&str` or cache strings
 7. **`todo!()` or `unimplemented!()`** - Complete all code before committing
 8. **Unnecessary allocations** - Reuse buffers, use `&[u8]` slices
+9. **Generic types (`<T>`)** - Use concrete types; generics complicate WASM and increase bundle size
+10. **Concurrency primitives** - No `thread::spawn`, `Arc`, `Mutex`, `async/await`; WASM is single-threaded
 
 ### Examples of Forbidden Patterns
 
@@ -204,6 +349,44 @@ fn process(data: Vec<u8>) {
 // ✅ CORRECT - Borrow instead
 fn process(data: &[u8]) {
     analyze(data);
+}
+
+// ❌ FORBIDDEN - Generic types increase WASM size
+fn parse_data<T: Deserialize>(data: &[u8]) -> Result<T, String> {
+    serde_json::from_slice(data).map_err(|e| e.to_string())
+}
+
+// ✅ CORRECT - Use concrete types
+fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    serde_json::from_slice(data).map_err(|e| e.to_string())
+}
+
+// ❌ FORBIDDEN - Concurrency primitives (WASM is single-threaded)
+use std::sync::{Arc, Mutex};
+use std::thread;
+
+fn process_async(data: Vec<u8>) {
+    let shared = Arc::new(Mutex::new(data));
+    thread::spawn(move || {
+        // This will not work in WASM!
+    });
+}
+
+// ✅ CORRECT - Synchronous processing
+fn process_sync(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    parse_metadata(data)
+}
+
+// ❌ FORBIDDEN - async/await (not needed in WASM)
+async fn analyze_file_async(data: &[u8]) -> Result<String, String> {
+    // WASM doesn't benefit from async
+    Ok("result".to_string())
+}
+
+// ✅ CORRECT - Synchronous functions
+fn analyze_file(data: &[u8]) -> Result<String, String> {
+    // Direct, synchronous processing
+    Ok("result".to_string())
 }
 ```
 
@@ -346,6 +529,17 @@ cargo clippy --all-targets --all-features -- -D warnings
 - `inefficient_to_string` - Use efficient conversions
 - `cognitive_complexity` - Keep functions simple
 
+**Denied lints (concurrency & complexity):**
+- `type_complexity` - Deny complex types (catches generics)
+- `future_not_send` - Deny async/concurrency (WASM is single-threaded)
+- `await_holding_lock` - Deny mutex with await
+- `await_holding_refcell_ref` - Deny RefCell issues
+- `mutex_atomic` - Deny mutex (we don't use atomics either)
+
+**Project-specific restrictions:**
+- ❌ No generic types (`<T>`) - Use concrete types for WASM optimization
+- ❌ No concurrency (`Arc`, `Mutex`, `thread::spawn`, `async/await`) - WASM is single-threaded
+
 ## 🎓 Learning Resources
 
 - [The Rust Book](https://doc.rust-lang.org/book/)
@@ -363,6 +557,8 @@ cargo clippy --all-targets --all-features -- -D warnings
 5. ✅ Inline small functions
 6. 🚫 Never use `unwrap()`, `expect()`, or `panic!()`
 7. 🚫 Avoid unnecessary allocations and clones
-8. 📝 Document public APIs
-9. 🚀 Optimize for WASM bundle size
-10. 🔍 Run clippy before committing
+8. 🚫 No generic types - use concrete types
+9. 🚫 No concurrency primitives - WASM is single-threaded
+10. 📝 Document public APIs
+11. 🚀 Optimize for WASM bundle size
+12. 🔍 Run clippy before committing

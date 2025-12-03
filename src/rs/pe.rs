@@ -2,7 +2,7 @@ use pelite::pe64::{Pe as Pe64, PeFile as PeFile64};
 use pelite::pe32::{Pe as Pe32, PeFile as PeFile32};
 use goblin::pe::PE;
 use std::collections::HashMap;
-use crate::{msi, FileAnalyzer};
+use crate::{msi, FileAnalyzer, MetadataResult};
 
 // Constants for magic numbers and patterns
 const MSI_SIGNATURE: &[u8] = &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
@@ -30,13 +30,13 @@ impl FileAnalyzer for PEAnalyzer {
         info
     }
     
-    fn parse_metadata(data: &[u8]) -> Result<HashMap<String, String>, String> {
+    fn parse_metadata(data: &[u8]) -> MetadataResult {
         let pe = PE::parse(data).map_err(|e| format!("Failed to parse PE file: {}", e))?;
         parse_pe_metadata(data, &pe)
     }
 }
 
-fn parse_pe_metadata(buf: &[u8], pe: &PE) -> Result<HashMap<String, String>, String> {
+fn parse_pe_metadata(buf: &[u8], pe: &PE) -> MetadataResult {
     let mut meta = HashMap::new();
     
     meta.insert("Format".into(), "PE".into());
@@ -114,12 +114,12 @@ fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashM
 }
 
 fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
-    let patterns: &[(&[u8], usize)] = &[
+    let patterns = [
         (b"O=" as &[u8], 2),
         (b"CN=" as &[u8], 3),
     ];
     
-    for (pattern_bytes, pattern_len) in patterns {
+    for (pattern_bytes, pattern_len) in patterns.iter() {
         if let Some(pos) = find_bytes(buf, pattern_bytes) {
             let start = pos + pattern_len;
             if start >= buf.len() {

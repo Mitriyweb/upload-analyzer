@@ -26,7 +26,7 @@
 
 # Complexity thresholds
 cognitive-complexity-threshold = 30
-type-complexity-threshold = 250
+type-complexity-threshold = 100  # Low threshold to discourage generics
 
 # Size thresholds for WASM optimization
 pass-by-value-size-limit = 256

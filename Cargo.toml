@@ -53,6 +53,15 @@ redundant_closure = "warn"
 explicit_auto_deref = "warn"
 manual_range_contains = "warn"
 
+# Deny concurrency patterns (WASM is single-threaded)
+future_not_send = "deny"
+await_holding_lock = "deny"
+await_holding_refcell_ref = "deny"
+mutex_atomic = "deny"
+
+# Deny complex types (including generics)
+type_complexity = "deny"
+
 [profile.release]
 opt-level = "z"
 lto = true
