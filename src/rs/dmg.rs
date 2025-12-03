@@ -47,12 +47,11 @@ pub fn is_dmg_file(data: &[u8]) -> bool {
            data[0..2] == [0x1F, 0x8B] ||
            data[0..4] == [0x42, 0x5A, 0x68, 0x39] ||
            data[0..4] == [0x42, 0x5A, 0x68, 0x31])
+        && data.len() >= DMG_KOLY_OFFSET_SIZE
     {
-        if data.len() >= DMG_KOLY_OFFSET_SIZE {
-            let end_offset = data.len() - DMG_KOLY_OFFSET_SIZE;
-            if &data[end_offset..end_offset + 4] == DMG_KOLY_SIGNATURE {
-                return true;
-            }
+        let end_offset = data.len() - DMG_KOLY_OFFSET_SIZE;
+        if &data[end_offset..end_offset + 4] == DMG_KOLY_SIGNATURE {
+            return true;
         }
     }
     
@@ -220,20 +219,24 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
                             .map(capitalize_first)
                             .collect::<Vec<_>>()
                             .join(" ");
-                        meta.insert(meta_key.to_string(), clean);
+                        meta.insert((*meta_key).to_string(), clean);
                     } else {
-                        meta.insert(meta_key.to_string(), value.to_string());
+                        meta.insert((*meta_key).to_string(), value.to_string());
                     }
                 }
             }
         }
         
-        if !meta.contains_key("ProductName") && meta.contains_key("DisplayName") {
-            meta.insert("ProductName".into(), meta.get("DisplayName").unwrap().clone());
+        if !meta.contains_key("ProductName") {
+            if let Some(display_name) = meta.get("DisplayName") {
+                meta.insert("ProductName".into(), display_name.clone());
+            }
         }
         
-        if meta.contains_key("ProductVersion") && !meta.contains_key("FileVersion") {
-            meta.insert("FileVersion".into(), meta.get("ProductVersion").unwrap().clone());
+        if !meta.contains_key("FileVersion") {
+            if let Some(product_version) = meta.get("ProductVersion") {
+                meta.insert("FileVersion".into(), product_version.clone());
+            }
         }
         
         if !meta.contains_key("CompanyName") {

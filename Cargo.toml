@@ -25,6 +25,34 @@ plist = "1.6"
 version = "0.3"
 features = ["console"]
 
+
+# ============================================================================
+# CLIPPY LINTS FOR AI AGENTS
+# ============================================================================
+# These lints enforce coding standards defined in .agent/workflows/rust-guidelines.md
+# AI agents MUST follow these rules when generating or modifying Rust code.
+#
+# Configuration:
+#   - Thresholds are in clippy.toml
+#   - Full guidelines in .agent/workflows/rust-guidelines.md
+#   - Run: npm run lint:rust
+# ============================================================================
+[lints.clippy]
+# Deny critical issues
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+todo = "deny"
+unimplemented = "deny"
+
+# Warn on performance and style issues
+inefficient_to_string = "warn"
+clone_on_ref_ptr = "warn"
+needless_return = "warn"
+redundant_closure = "warn"
+explicit_auto_deref = "warn"
+manual_range_contains = "warn"
+
 [profile.release]
 opt-level = "z"
 lto = true

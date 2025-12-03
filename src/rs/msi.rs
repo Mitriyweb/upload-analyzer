@@ -87,7 +87,7 @@ fn extract_string_from_buffer(buffer: &[u8], meta: &mut HashMap<String, String>,
         }
     }
     
-    valid_strings.sort_by(|a, b| b.len().cmp(&a.len()));
+    valid_strings.sort_by_key(|b| std::cmp::Reverse(b.len()));
     
     let best_string = valid_strings.iter().find(|s| {
         s.len() >= 5 && s.len() < 100 && 

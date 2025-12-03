@@ -106,7 +106,7 @@ fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashM
             if let Some(value) = msi_meta.get(*msi_key) {
                 if !meta.contains_key(*pe_key) {
                     meta.insert(format!("{}FromEmbeddedMSI", pe_key), value.clone());
-                    meta.insert(pe_key.to_string(), format!("{} (from embedded MSI)", value));
+                    meta.insert((*pe_key).to_string(), format!("{} (from embedded MSI)", value));
                 }
             }
         }
@@ -137,7 +137,7 @@ fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
                 text_end = i + 1;
             }
             
-            if text_end > 0 && text_end >= 3 {
+            if text_end >= 3 {
                 if let Ok(name) = std::str::from_utf8(&candidate[..text_end]) {
                     let name = name.trim();
                     if name.len() >= 3 

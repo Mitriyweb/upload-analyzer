@@ -1,0 +1,38 @@
+# ============================================================================
+# CLIPPY CONFIGURATION FOR AI AGENTS
+# ============================================================================
+# This file configures clippy linter thresholds for Rust code.
+# AI agents must respect these settings when generating or modifying code.
+#
+# Related files:
+#   - Cargo.toml [lints.clippy] section - defines which lints are denied/warned
+#   - .agent/workflows/rust-guidelines.md - full AI coding guidelines
+#
+# IDE Integration:
+#   This file is automatically recognized by:
+#   - rust-analyzer
+#   - IntelliJ RUST
+#   - VS Code rust-analyzer extension
+#   - AI coding assistants (Copilot, Cursor, etc.)
+#
+# Enforcement:
+#   Run: npm run lint:rust
+#   Auto-fix: npm run lint:rust:fix
+# ============================================================================
+
+# Clippy Configuration for upload-analyzer
+# This file contains configuration values for clippy lints
+# Lint levels (deny/warn/allow) are configured in Cargo.toml [lints.clippy] section
+
+# Complexity thresholds
+cognitive-complexity-threshold = 30
+type-complexity-threshold = 250
+
+# Size thresholds for WASM optimization
+pass-by-value-size-limit = 256
+too-large-for-stack = 512
+trivial-copy-size-limit = 128
+
+# Other thresholds
+too-many-arguments-threshold = 8
+too-many-lines-threshold = 150
