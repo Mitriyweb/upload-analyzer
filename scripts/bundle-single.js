@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-// Read the WASM wrapper
-const wrapperPath = path.join(__dirname, '../pkg/upload_analyzer_bg.js');
+// Read the WASM wrapper (use the main upload_analyzer.js which has init)
+const wrapperPath = path.join(__dirname, '../pkg/upload_analyzer.js');
 let wrapper = fs.readFileSync(wrapperPath, 'utf-8');
 
 // Read the app code
@@ -10,7 +10,7 @@ const appPath = path.join(__dirname, '../dev/app.js');
 let app = fs.readFileSync(appPath, 'utf-8');
 
 // Remove the import line from app.js
-app = app.replace(/^import.*from.*['\"].*['\"];?\\s*$/m, '');
+app = app.replace(/^import.*from.*['"].*['"];?\s*$/m, '');
 
 // The wrapper already has init, analyze_file, and get_file_info defined
 // We just need to make sure they're accessible in the bundle
@@ -21,6 +21,8 @@ const bundle = `
 ${wrapper}
 
 // Expose WASM functions globally for the app code
+// The default export is the init function
+const init = __wbg_init;
 window.init = init;
 window.analyze_file = analyze_file;
 window.get_file_info = get_file_info;
