@@ -513,32 +513,79 @@ pub fn init_panic_hook() {
 
 ## 📋 Clippy Configuration
 
-The project uses strict clippy rules. Run before committing:
+**AI agents MUST follow all lints and thresholds defined in:**
+- `Cargo.toml` - `[lints.clippy]` section (lint levels: deny/warn)
+- `clippy.toml` - Threshold values for complexity and size limits
+
+Run before committing:
 
 ```bash
 cargo clippy --all-targets --all-features -- -D warnings
+# Or use npm script:
+npm run lint:rust
 ```
 
-**Denied lints:**
-- `unwrap_used`, `expect_used` - No panicking
-- `panic` - No explicit panics
-- `todo`, `unimplemented` - Complete all code
+### Lints from Cargo.toml [lints.clippy]
 
-**Warned lints:**
-- `clone_on_ref_ptr` - Avoid unnecessary clones
-- `inefficient_to_string` - Use efficient conversions
-- `cognitive_complexity` - Keep functions simple
+**Denied lints (critical issues):**
+- `unwrap_used` = "deny" - Never use `.unwrap()`, use proper error handling
+- `expect_used` = "deny" - Never use `.expect()`, use proper error handling
+- `panic` = "deny" - No explicit `panic!()` calls in library code
+- `todo` = "deny" - Complete all code before committing
+- `unimplemented` = "deny" - Implement all functions
 
-**Denied lints (concurrency & complexity):**
-- `type_complexity` - Deny complex types (catches generics)
-- `future_not_send` - Deny async/concurrency (WASM is single-threaded)
-- `await_holding_lock` - Deny mutex with await
-- `await_holding_refcell_ref` - Deny RefCell issues
-- `mutex_atomic` - Deny mutex (we don't use atomics either)
+**Warned lints (performance and style):**
+- `inefficient_to_string` = "warn" - Use efficient string conversions
+- `clone_on_ref_ptr` = "warn" - Avoid unnecessary clones on Arc/Rc
+- `needless_return` = "warn" - Remove redundant return statements
+- `redundant_closure` = "warn" - Simplify closures where possible
+- `explicit_auto_deref` = "warn" - Remove unnecessary explicit derefs
+- `manual_range_contains` = "warn" - Use `.contains()` for range checks
 
-**Project-specific restrictions:**
-- ❌ No generic types (`<T>`) - Use concrete types for WASM optimization
-- ❌ No concurrency (`Arc`, `Mutex`, `thread::spawn`, `async/await`) - WASM is single-threaded
+**Denied lints (concurrency - WASM is single-threaded):**
+- `future_not_send` = "deny" - No async futures (not needed in WASM)
+- `await_holding_lock` = "deny" - No mutex usage with await
+- `await_holding_refcell_ref` = "deny" - No RefCell issues with await
+- `mutex_atomic` = "deny" - No mutex (WASM is single-threaded)
+
+**Denied lints (complexity - catches generics):**
+- `type_complexity` = "deny" - Deny complex types (use type aliases)
+
+### Thresholds from clippy.toml
+
+**Complexity thresholds:**
+- `cognitive-complexity-threshold = 30` - Maximum cognitive complexity per function
+- `type-complexity-threshold = 100` - **Very low to discourage generics** - use type aliases
+
+**Size thresholds (WASM optimization):**
+- `pass-by-value-size-limit = 256` - Max bytes for pass-by-value (use references for larger)
+- `too-large-for-stack = 512` - Max bytes for stack allocation
+- `trivial-copy-size-limit = 128` - Max bytes for trivial Copy types
+
+**Other thresholds:**
+- `too-many-arguments-threshold = 8` - Max function parameters
+- `too-many-lines-threshold = 150` - Max lines per function
+
+### Project-specific restrictions
+
+**❌ FORBIDDEN:**
+1. **Generic types (`<T>`)** - Use concrete types for WASM optimization
+   - Generics increase bundle size
+   - Caught by `type_complexity` lint (threshold = 100)
+   - Use type aliases for complex concrete types
+
+2. **Concurrency primitives** - WASM is single-threaded
+   - No `Arc`, `Mutex`, `RwLock`
+   - No `thread::spawn`, `thread::*`
+   - No `async/await`, `Future`, `async fn`
+   - No `mpsc::channel` or other channels
+   - Caught by `future_not_send`, `await_holding_lock`, `mutex_atomic` lints
+
+**✅ REQUIRED:**
+- Follow ALL thresholds in `clippy.toml`
+- Respect ALL lint levels in `Cargo.toml [lints.clippy]`
+- Use type aliases when approaching `type-complexity-threshold`
+- Keep functions under `too-many-lines-threshold`
 
 ## 🎓 Learning Resources
 

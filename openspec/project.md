@@ -1,31 +1,133 @@
 # Project Context
 
 ## Purpose
-[Describe your project's purpose and goals]
+Upload Analyzer is a WebAssembly-powered binary file analyzer that provides detailed analysis of PE (Windows executables), MSI (Windows Installer), and DMG (Apple Disk Image) files directly in the browser with native Rust performance.
 
 ## Tech Stack
-- [List your primary technologies]
-- [e.g., TypeScript, React, Node.js]
+
+### Backend
+- **Rust** - Core analysis engine compiled to WebAssembly
+- **goblin** - Multi-format binary parsing (PE)
+- **pelite** - Advanced PE file analysis
+- **cfb** - Compound File Binary format parsing (MSI)
+- **plist** - Apple property list parsing (DMG)
+- **wasm-bindgen** - Rust/JavaScript interop
+
+### Frontend
+- **Vanilla JavaScript** (ES6 modules)
+- **TypeScript** - Type definitions and helpers
+- **Terser** - JavaScript minification
+
+### Build Tools
+- **wasm-pack** - WebAssembly compilation
+- **esbuild** - Fast bundling
+- **http-server** - Development server
 
 ## Project Conventions
 
 ### Code Style
-[Describe your code style preferences, formatting rules, and naming conventions]
+
+**Rust:**
+- Follow Rust 2021 edition standards
+- Use `clippy.toml` and `rustfmt.toml` for formatting
+- Strict clippy lints enforced (see `Cargo.toml` and `.agent/workflows/rust-guidelines.md`)
+- **NO generic types** - WASM optimization requirement
+- **NO concurrency primitives** - WASM is single-threaded
+- Type complexity threshold: 100 (enforced via clippy)
+
+**TypeScript:**
+- ESLint configuration in `eslint.config.mjs`
+- Strict type checking enabled
+- Export type definitions from `src/ts/types/index.d.ts`
 
 ### Architecture Patterns
-[Document your architectural decisions and patterns]
+
+**WASM Module Structure:**
+- All Rust code in `src/rs/`
+- Main entry point: `src/rs/lib.rs`
+- Format-specific modules: `pe.rs`, `msi.rs`, `dmg.rs`
+- Public API exposed via `wasm-bindgen`
+
+**Type Safety:**
+- Rust types serialized to JSON
+- TypeScript definitions mirror Rust structures
+- Type guards in `src/ts/helpers.ts` for runtime validation
+
+**Build Outputs:**
+- `pkg/` - NPM package with WASM binary
+- `public/` - Production demo (3 files: HTML, JS, WASM)
+- `dist/` - Compiled TypeScript helpers
 
 ### Testing Strategy
-[Explain your testing approach and requirements]
+- Clippy lints run on all code (`npm run lint:rust`)
+- ESLint for TypeScript (`npm run lint:ts`)
+- Manual testing via dev/production servers
+- Type safety validated at compile time
 
 ### Git Workflow
-[Describe your branching strategy and commit conventions]
+- Main branch for stable releases
+- Feature branches for new capabilities
+- OpenSpec workflow for spec-driven development
+- Changes archived after deployment
 
 ## Domain Context
-[Add domain-specific knowledge that AI assistants need to understand]
+
+**Binary File Analysis:**
+- PE files: Windows executables (.exe, .dll, .sys)
+- MSI files: Windows Installer packages
+- DMG files: Apple Disk Images
+
+**Key Analysis Features:**
+- File type detection
+- Architecture identification (x86, x86_64, ARM)
+- Section/segment parsing
+- Import/export table extraction
+- Version resource extraction
+- Digital signature verification
+- Installer type detection
 
 ## Important Constraints
-[List any technical, business, or regulatory constraints]
+
+### Technical Constraints
+- **WASM Limitations:**
+  - Single-threaded execution only
+  - No file system access (browser sandbox)
+  - Limited memory (browser heap)
+  - No native OS APIs
+
+- **Rust for WASM:**
+  - Avoid generic types (code bloat)
+  - Avoid async/await and concurrency primitives
+  - Minimize dependencies
+  - Optimize for binary size (`opt-level = "z"`)
+
+### Performance Targets
+- WASM binary size: < 250 KB
+- Analysis time: < 1 second for typical files
+- Memory usage: < 100 MB for large files
+
+### Browser Compatibility
+- Modern browsers with WebAssembly support
+- ES6 module support required
+- No polyfills for legacy browsers
 
 ## External Dependencies
-[Document key external services, APIs, or systems]
+
+### Rust Crates
+- `goblin` - Binary parsing
+- `pelite` - PE-specific analysis
+- `cfb` - MSI/OLE parsing
+- `plist` - DMG/plist parsing
+- `wasm-bindgen` - JS interop
+- `serde`/`serde_json` - Serialization
+
+### NPM Packages
+- `terser` - JS minification
+- `esbuild` - Fast bundling
+- `http-server` - Development server
+- `typescript` - Type checking
+
+### Build Requirements
+- Rust toolchain (rustup)
+- wasm-pack
+- Node.js >= 25.1.0
