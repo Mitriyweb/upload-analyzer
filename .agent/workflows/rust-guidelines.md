@@ -23,14 +23,53 @@ version: 1.0
 
 This document defines the Rust coding standards and best practices for AI agents working on the upload-analyzer project. These rules ensure code quality, performance, and maintainability.
 
+## Table of Contents
+
+- [Project Context](#-project-context)
+- [WASM-Specific Development](#-wasm-specific-development)
+  - [Required Best Practices](#-required-best-practices)
+  - [Forbidden Constructs](#-forbidden-constructs)
+  - [WASM Integration](#-wasm-integration)
+- [Backend Development (Optional)](#-backend-development-optional)
+  - [Backend Stack & Libraries](#backend-stack--libraries)
+  - [OpenAPI Generation](#openapi-generation)
+  - [Data Types & Serialization](#data-types--serialization)
+  - [Error Handling (Problem Details)](#error-handling-problem-details)
+  - [HTTP Handlers](#http-handlers)
+  - [Idempotency & ETags](#idempotency--etags)
+  - [Timestamp Handling](#timestamp-handling)
+- [Universal Best Practices](#-universal-best-practices)
+  - [Error Handling](#error-handling)
+  - [Iterator Methods](#iterator-methods-over-manual-loops)
+  - [String Handling](#string-handling)
+  - [Constants](#const-and-static)
+  - [Code Organization](#-code-organization)
+  - [Performance Guidelines](#-performance-guidelines)
+- [Clippy Configuration](#-clippy-configuration)
+- [Learning Resources](#-learning-resources)
+
 ## 🎯 Project Context
 
-This is a **WebAssembly (WASM) project** that analyzes PE, MSI, and DMG files in the browser. Code must be:
+This is primarily a **WebAssembly (WASM) project** that analyzes PE, MSI, and DMG files in the browser. The guidelines are organized into:
+
+1. **WASM-Specific Development** - Rules for browser-based WASM code (current primary focus)
+2. **Backend Development** - Patterns for server-side Rust APIs (if/when backend is added)
+3. **Universal Best Practices** - Rules that apply to both contexts
+
+### WASM Code Requirements
+
+WASM code must be:
 - **Size-optimized** for WASM bundle size
 - **Performance-focused** for browser execution
 - **Error-resilient** for user-facing functionality
 
-## ✅ Required Best Practices
+---
+
+## 🌐 WASM-Specific Development
+
+This section contains rules specific to WebAssembly development. **These restrictions do NOT apply to backend code.**
+
+## ✅ Required Best Practices (WASM)
 
 ### Error Handling
 
@@ -510,6 +549,380 @@ pub fn init_panic_hook() {
     console_error_panic_hook::set_once();
 }
 ```
+
+---
+
+## 🚀 Backend Development (Optional)
+
+This section contains patterns for server-side Rust API development. These guidelines apply **if/when a backend component is added** to the project.
+
+> [!NOTE]
+> Backend code is **exempt** from WASM-specific restrictions (no generics, no concurrency). Backend services can use async/await, Arc, Mutex, and generic types as appropriate.
+
+### Backend Stack & Libraries
+
+**Recommended stack for Rust backend APIs:**
+
+- **Routing/middleware**: `axum`, `tower-http` (CORS, compression, timeouts)
+- **JSON & validation**: `serde`, `validator`
+- **OpenAPI**: `utoipa`, `utoipa-swagger-ui` (optional docs UI)
+- **Observability**: `tracing`, `tracing-subscriber`, `tracing-opentelemetry`
+- **DB access**: `sqlx` or `sea-orm`; use query builders for filters/sorts safely
+- **IDs & time**: `uuid` (v7) or `ulid`; `time` crate for UTC (`OffsetDateTime`)
+
+### OpenAPI Generation
+
+Use `utoipa` to generate OpenAPI 3.1 documentation automatically:
+
+```rust
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        list_tickets,
+        get_ticket,
+        create_ticket,
+    ),
+    components(
+        schemas(Ticket, TicketPriority, TicketStatus, Problem)
+    ),
+    tags(
+        (name = "tickets", description = "Ticket management endpoints")
+    )
+)]
+struct ApiDoc;
+
+// Export OpenAPI JSON at /v1/openapi.json
+pub fn openapi_json() -> String {
+    ApiDoc::openapi().to_json().unwrap()
+}
+```
+
+**Best practices:**
+- Annotate handlers with `#[utoipa::path]`
+- Export OpenAPI 3.1 JSON at `/v1/openapi.json`
+- Validate in CI with an OpenAPI linter
+- Use `utoipa-swagger-ui` for interactive documentation
+
+### Data Types & Serialization
+
+**Use proper serialization with serde and OpenAPI schemas:**
+
+```rust
+use serde::{Deserialize, Serialize};
+use time::OffsetDateTime;
+use utoipa::ToSchema;
+use uuid::Uuid; // enable the v7 feature in Cargo.toml
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Ticket {
+    pub id: Uuid,
+    pub title: String,
+    pub priority: TicketPriority,
+    pub status: TicketStatus,
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339")]
+    pub updated_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339::option")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deleted_at: Option<OffsetDateTime>,
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum TicketPriority { 
+    Low, 
+    Medium, 
+    High 
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum TicketStatus { 
+    Open, 
+    InProgress, 
+    Resolved, 
+    Closed 
+}
+```
+
+**Key patterns:**
+- Use `#[serde(rename_all = "camelCase")]` for JavaScript compatibility
+- Use `time::OffsetDateTime` for timestamps (not `chrono`)
+- Use `#[serde(with = "time::serde::rfc3339")]` for RFC3339/ISO-8601 formatting
+- Use `utoipa::ToSchema` for OpenAPI schema generation
+- Use `uuid` v7 for sortable, time-based IDs
+
+### Error Handling (Problem Details)
+
+**Implement RFC 9457 Problem Details for HTTP APIs:**
+
+```rust
+use serde::Serialize;
+use utoipa::ToSchema;
+
+/// RFC 9457 Problem Details
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Problem {
+    #[schema(example = "https://api.example.com/errors/validation")]
+    pub r#type: String,
+    #[schema(example = "Invalid request")]
+    pub title: String,
+    pub status: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub instance: Option<String>,
+    #[serde(rename = "traceId")]
+    pub trace_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub errors: Option<Vec<ValidationError>>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ValidationError {
+    pub field: String,
+    pub code: String,
+    pub message: String,
+}
+```
+
+**Usage in handlers:**
+
+```rust
+use axum::{http::StatusCode, response::{IntoResponse, Json}};
+
+impl IntoResponse for Problem {
+    fn into_response(self) -> axum::response::Response {
+        let status = StatusCode::from_u16(self.status).unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+        (status, Json(self)).into_response()
+    }
+}
+
+// Return Problem from handlers
+pub async fn create_ticket(payload: Json<CreateTicketRequest>) -> Result<Json<Ticket>, Problem> {
+    if payload.title.is_empty() {
+        return Err(Problem {
+            r#type: "https://api.example.com/errors/validation".to_string(),
+            title: "Validation Error".to_string(),
+            status: 422,
+            detail: Some("Title cannot be empty".to_string()),
+            instance: None,
+            trace_id: "01J...".to_string(),
+            errors: Some(vec![ValidationError {
+                field: "title".to_string(),
+                code: "required".to_string(),
+                message: "Title is required".to_string(),
+            }]),
+        });
+    }
+    // ... create ticket
+    Ok(Json(ticket))
+}
+```
+
+### HTTP Handlers
+
+**axum handler with query parameters and envelope pattern:**
+
+```rust
+use axum::{extract::Query, http::HeaderMap, response::{IntoResponse, Json}};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use utoipa::{IntoParams, ToSchema};
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct ListParams {
+    // Capture all query params into a HashMap to handle filters dynamically
+    #[serde(flatten)]
+    pub filters: HashMap<String, String>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Envelope<T> { 
+    pub data: T, 
+    pub meta: Meta, 
+    pub links: Links 
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct Meta { 
+    pub limit: u16, 
+    pub has_next: bool, 
+    pub has_prev: bool 
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct Links { 
+    pub next: Option<String>, 
+    pub prev: Option<String> 
+}
+
+/// List tickets with cursor pagination
+#[utoipa::path(
+    get,
+    path = "/v1/tickets",
+    params(ListParams),
+    responses(
+        (status = 200, description = "List tickets", body = Envelope<Vec<Ticket>>),
+        (status = 422, description = "Validation error", body = Problem)
+    ),
+    security(("oauth2" = []))
+)]
+pub async fn list_tickets(Query(params): Query<ListParams>) -> impl IntoResponse {
+    // Example of extracting params from the filters map
+    let limit = params.filters.get("limit").and_then(|s| s.parse().ok()).unwrap_or(25);
+    let after = params.filters.get("after").cloned();
+    // status.in=open,in_progress -> ["open", "in_progress"]
+    let statuses: Option<Vec<_>> = params.filters.get("status.in").map(|s| s.split(',').collect());
+
+    // ... database logic to fetch tickets based on filters ...
+    let tickets: Vec<Ticket> = vec![]; // Placeholder
+
+    let response = Envelope {
+        data: tickets,
+        meta: Meta { limit, has_next: false, has_prev: false },
+        links: Links { next: None, prev: None },
+    };
+
+    // Build response with headers
+    let mut headers = HeaderMap::new();
+    headers.insert("traceId", "01J...".parse().unwrap());
+    (headers, Json(response))
+}
+```
+
+**Key patterns:**
+- Use `Query<T>` for query parameters
+- Use `Json<T>` for request/response bodies
+- Use envelope pattern for list responses (data, meta, links)
+- Use cursor pagination (not offset/limit)
+- Include trace IDs in headers for observability
+- Use `#[utoipa::path]` for OpenAPI documentation
+
+### Idempotency & ETags
+
+**Implement idempotency for write operations:**
+
+```rust
+// Persist idempotency keys in database
+// Table: idempotency_keys (key, request_fingerprint, response_hash, expires_at)
+
+pub async fn create_ticket_idempotent(
+    headers: HeaderMap,
+    Json(payload): Json<CreateTicketRequest>,
+) -> Result<(HeaderMap, Json<Ticket>), Problem> {
+    let idempotency_key = headers
+        .get("idempotency-key")
+        .and_then(|v| v.to_str().ok());
+    
+    if let Some(key) = idempotency_key {
+        // Check if request with this key was already processed
+        if let Some(cached_response) = check_idempotency_cache(key).await {
+            let mut response_headers = HeaderMap::new();
+            response_headers.insert("idempotency-replayed", "true".parse().unwrap());
+            return Ok((response_headers, Json(cached_response)));
+        }
+    }
+    
+    // Process request normally
+    let ticket = create_ticket_in_db(payload).await?;
+    
+    // Compute and return ETag for concurrency control
+    let etag = compute_etag(&ticket);
+    let mut response_headers = HeaderMap::new();
+    response_headers.insert("etag", etag.parse().unwrap());
+    
+    // Cache response for idempotency
+    if let Some(key) = idempotency_key {
+        cache_idempotent_response(key, &ticket).await;
+    }
+    
+    Ok((response_headers, Json(ticket)))
+}
+
+// Clients send If-Match header for updates
+pub async fn update_ticket(
+    headers: HeaderMap,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateTicketRequest>,
+) -> Result<Json<Ticket>, Problem> {
+    let if_match = headers.get("if-match").and_then(|v| v.to_str().ok());
+    
+    let current_ticket = get_ticket_by_id(id).await?;
+    let current_etag = compute_etag(&current_ticket);
+    
+    if let Some(client_etag) = if_match {
+        if client_etag != current_etag {
+            return Err(Problem {
+                r#type: "https://api.example.com/errors/conflict".to_string(),
+                title: "Conflict".to_string(),
+                status: 409,
+                detail: Some("Resource was modified by another request".to_string()),
+                instance: Some(format!("/v1/tickets/{}", id)),
+                trace_id: "01J...".to_string(),
+                errors: None,
+            });
+        }
+    }
+    
+    // Update ticket
+    let updated_ticket = update_ticket_in_db(id, payload).await?;
+    Ok(Json(updated_ticket))
+}
+```
+
+**Best practices:**
+- Persist `(idempotency_key, request_fingerprint, response_hash, expires_at)`
+- On replay with same fingerprint: return stored response + `Idempotency-Replayed: true`
+- For writes, compute and return `ETag`; clients send `If-Match` for concurrency
+- Use 409 Conflict for ETag mismatches
+
+### Timestamp Handling
+
+**Use `time::OffsetDateTime` for all timestamps:**
+
+```rust
+use time::OffsetDateTime;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Event {
+    // Required timestamp - RFC3339 format
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_at: OffsetDateTime,
+    
+    // Optional timestamp - RFC3339 format
+    #[serde(with = "time::serde::rfc3339::option")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub deleted_at: Option<OffsetDateTime>,
+}
+
+// Get current time in UTC
+let now = OffsetDateTime::now_utc();
+
+// Parse from RFC3339 string
+let timestamp = OffsetDateTime::parse("2025-12-15T11:40:25Z", &time::format_description::well_known::Rfc3339)?;
+```
+
+**Rules:**
+- Use `time::OffsetDateTime` (not `chrono::DateTime`)
+- Always use UTC for storage and APIs
+- Use `#[serde(with = "time::serde::rfc3339")]` for required fields
+- Use `#[serde(with = "time::serde::rfc3339::option")]` for optional fields
+- Format as RFC3339/ISO-8601 with milliseconds
+
+---
+
+## 🎯 Universal Best Practices
+
+These practices apply to **both WASM and backend code**.
 
 ## 📋 Clippy Configuration
 

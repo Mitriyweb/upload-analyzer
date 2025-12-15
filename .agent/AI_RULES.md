@@ -5,6 +5,8 @@ This project uses AI agent guidelines to maintain code quality and consistency.
 ## Quick Reference
 
 - **Rust Guidelines**: See `.agent/workflows/rust-guidelines.md` or use `/rust-guidelines` command
+  - **WASM Development**: Rules for browser-based WebAssembly code (current focus)
+  - **Backend Development**: Patterns for server-side APIs (if/when backend is added)
 - **Linter**: `npm run lint:rust` to check Rust code
 - **Auto-fix**: `npm run lint:rust:fix` to automatically fix issues
 
@@ -122,9 +124,10 @@ These guidelines ensure AI-generated code meets project standards.
 
 ## Version
 
-- **Guidelines version**: 1.0
-- **Last updated**: 2025-12-03
+- **Guidelines version**: 2.0
+- **Last updated**: 2025-12-15
 - **Clippy threshold**: type-complexity = 100
+- **New in 2.0**: Added backend development patterns (OpenAPI, RFC 9457 errors, axum handlers)
 
 ---
 
