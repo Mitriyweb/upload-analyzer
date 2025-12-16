@@ -42,25 +42,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.0
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '25.1.0'
-          cache: 'pnpm'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run ESLint
-        run: pnpm run lint:ts
+        run: npm run lint:ts
 
-      - name: Run pnpm audit
-        run: pnpm audit
+      - name: Run npm audit
+        run: npm audit
 
   build:
     name: Build WASM
@@ -73,11 +68,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.11.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
