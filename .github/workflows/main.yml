@@ -24,14 +24,17 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
 
+    - name: Enable Corepack
+      run: corepack enable
+
     - name: Install dependencies
-      run: npm install
+      run: pnpm install
 
     - name: Run audit
-      run: npm audit
+      run: pnpm audit
 
     - name: Run lint typescript
-      run: npm run lint:ts
+      run: pnpm run lint:ts
 
   validate-rust:
     name: Lint Rust
@@ -95,9 +98,12 @@ jobs:
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
