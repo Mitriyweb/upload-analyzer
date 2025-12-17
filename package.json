@@ -38,6 +38,9 @@
     "lint:ts": "eslint src/ts",
     "lint:ts:fix": "eslint src/ts --fix",
     "prepublishOnly": "npm run build",
+    "prek:install": "npx prek install",
+    "prek:run": "npx prek run --all-files",
+    "postinstall": "npx prek install",
     "audit": "npm audit"
   },
   "repository": {
@@ -64,14 +67,17 @@
   "devDependencies": {
     "@eslint/js": "9.27.0",
     "@types/node": "22.14.0",
-    "eslint": "9.27.0",
-    "typescript-eslint": "8.32.1",
     "esbuild": "0.25.12",
+    "eslint": "9.27.0",
     "http-server": "14.1.0",
     "terser": "5.31.1",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "typescript-eslint": "8.32.1"
   },
   "engines": {
     "node": ">=25.2.0"
+  },
+  "dependencies": {
+    "@j178/prek": "0.2.22"
   }
 }
