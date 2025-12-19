@@ -4,7 +4,7 @@ A WebAssembly-powered binary file analyzer built with Rust.
 
 ## Features
 
-- **Multi-Format Analysis**: PE (Windows), MSI (Windows Installer), DMG (Apple Disk Image)
+- **Multi-Format Analysis**: PE (Windows), MSI (Windows), DMG (macOS), DEB (Linux), RPM (Linux)
 - **PE Metadata Extraction**: Version info, company, product details, timestamps
 - **32-bit & 64-bit Support**: Handles both x86 and x64 PE files
 - **WebAssembly**: Runs directly in the browser with native Rust performance
@@ -72,7 +72,9 @@ upload-analyzer/
 │   │   ├── lib.rs         # Main Rust entry point
 │   │   ├── pe.rs          # PE file analysis module
 │   │   ├── msi.rs         # MSI file analysis module
-│   │   └── dmg.rs         # DMG file analysis module
+│   │   ├── dmg.rs         # DMG file analysis module
+│   │   ├── deb.rs         # DEB file analysis module
+│   │   └── rpm.rs         # RPM file analysis module
 │   │
 │   └── ts/                # TypeScript source code
 │       ├── helpers.ts     # Type guards and parsers (source)
@@ -204,7 +206,7 @@ if (isAnalysisError(analysis)) {
   console.log('Product:', analysis.ProductName);      // ✓ Type-safe
   console.log('Version:', analysis.FileVersionNumber); // ✓ IntelliSense
   console.log('Signed by:', analysis.SignedBy);
-  
+
   if (analysis.InstallerType) {
     console.log('Installer:', analysis.InstallerType);
   }
@@ -227,12 +229,12 @@ fileInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   const buffer = await file.arrayBuffer();
   const data = new Uint8Array(buffer);
-  
+
   try {
     // Get basic file info
     const info = analyzer.get_file_info(data);
     console.log('File info:', JSON.parse(info));
-    
+
     // Analyze PE file
     const analysis = analyzer.analyze_pe_file(data);
     console.log('Analysis:', JSON.parse(analysis));
@@ -260,8 +262,8 @@ console.log('File info:', JSON.parse(info));
 try {
   const analysis = analyzer.analyze_pe_file(buffer);
   const result = JSON.parse(analysis);
-  
-  console.log('File Type:', result.file_type);
+
+  console.log('Format:', result.Format);
   console.log('Architecture:', result.architecture);
   console.log('Sections:', result.sections);
   console.log('Imports:', result.imports);
@@ -294,7 +296,7 @@ Perform detailed analysis of a PE file.
 - `data`: Uint8Array containing the PE file data
 
 **Returns:** JSON string with analysis results including:
-- `file_type`: Type of file (PE, ELF, etc.)
+- `Format`: Type of file (PE, MSI, DMG, DEB, RPM)
 - `architecture`: CPU architecture (x86, x86_64)
 - `sections`: Array of section information
 - `imports`: List of imported functions
@@ -306,7 +308,7 @@ Perform detailed analysis of a PE file.
 
 ```json
 {
-  "file_type": "PE",
+  "Format": "PE",
   "architecture": "x86_64",
   "is_64bit": true,
   "entry_point": 4096,

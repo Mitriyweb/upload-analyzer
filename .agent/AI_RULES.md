@@ -24,6 +24,7 @@ When working on this project:
 7. Use `const` for all constants
 8. Use type aliases for complex types (e.g., `MetadataResult`)
 9. Document all public APIs with `///` comments
+10. **Consult `FORMATS.md`** when modifying or adding file format support to ensure metadata fields follow defined standards and avoid aliases.
 
 ### 🚫 NEVER DO
 1. **Never use `unwrap()`, `expect()`, or `panic!()`** in production code
@@ -36,6 +37,7 @@ When working on this project:
 4. **Never use `.to_string()` in hot paths** - causes allocations
 5. **Never use `todo!()` or `unimplemented!()`** - complete all code
 6. **Never use `unsafe`** without detailed safety documentation
+7. **Never use metadata aliases** - Always map data to its primary key defined in `FORMATS.md`. Do not duplicate the same value under multiple keys.
 
 ### 🎯 WASM-Specific Rules
 

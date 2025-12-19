@@ -1,20 +1,14 @@
 # Capability: PE File Analysis
 
-## Overview
+## Purpose
 Provides comprehensive analysis of Portable Executable (PE) files including Windows executables (.exe), dynamic link libraries (.dll), and system drivers (.sys). Extracts metadata, version information, imports/exports, sections, and digital signatures.
-
 ## Requirements
-
 ### Requirement: PE File Detection
 The system SHALL detect and identify PE file format from binary data.
 
 #### Scenario: Valid PE file
 - **WHEN** binary data contains valid PE signature (MZ header + PE magic)
-- **THEN** return file type as "PE" with architecture information
-
-#### Scenario: Invalid PE file
-- **WHEN** binary data does not contain valid PE signature
-- **THEN** return error indicating invalid PE format
+- **THEN** return `Format` as "PE" with architecture information
 
 ### Requirement: Architecture Detection
 The system SHALL identify the target CPU architecture of PE files.
@@ -36,11 +30,7 @@ The system SHALL extract version information from PE file resources.
 
 #### Scenario: Standard version info
 - **WHEN** PE file contains VS_VERSION_INFO resource
-- **THEN** extract CompanyName, ProductName, FileVersion, ProductVersion, FileDescription
-
-#### Scenario: Missing version info
-- **WHEN** PE file does not contain version resources
-- **THEN** return null or empty values for version fields
+- **THEN** extract `CompanyName`, `ProductName`, `FileVersion`, `ProductVersion`, and `FileDescription` using primary keys.
 
 ### Requirement: Section Analysis
 The system SHALL parse and extract PE section information.
@@ -80,11 +70,7 @@ The system SHALL detect and extract digital signature information.
 
 #### Scenario: Signed executable
 - **WHEN** PE file contains Authenticode signature
-- **THEN** extract signer name and certificate information
-
-#### Scenario: Unsigned executable
-- **WHEN** PE file does not contain digital signature
-- **THEN** return null or "Not signed" for signature fields
+- **THEN** extract `SignedBy` as the primary key for the signer name.
 
 ### Requirement: Installer Detection
 The system SHALL identify installer types from PE metadata.
@@ -135,8 +121,8 @@ The system SHALL provide clear error messages for analysis failures.
 ### PEAnalysis Type
 ```typescript
 {
-  file_type: "PE",
-  architecture: "x86" | "x86_64" | "ARM" | "ARM64",
+  Format: "PE",
+  Architecture: "x86" | "x86_64" | "ARM" | "ARM64",
   is_64bit: boolean,
   entry_point: number,
   sections: Array<{

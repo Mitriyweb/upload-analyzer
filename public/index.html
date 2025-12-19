@@ -86,15 +86,15 @@
     <div class="container">
         <h1>🔍 Upload Analyzer Demo</h1>
         <p>Upload a binary file to analyze its structure and contents.</p>
-        
+
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput">
             <p>📁 Click to select a file or drag and drop here</p>
-            <p style="color: #666; font-size: 14px;">Supported: PE (Windows), MSI</p>
+            <p style="color: #666; font-size: 14px;">Supported: PE, MSI, DMG, DEB, RPM</p>
         </div>
 
         <div id="status"></div>
-        
+
         <div class="results" id="results" style="display: none;">
             <h2>Analysis Results</h2>
             <div id="output"></div>

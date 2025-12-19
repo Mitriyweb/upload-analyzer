@@ -1,10 +1,8 @@
 # Capability: File Type Detection
 
-## Overview
+## Purpose
 Provides basic file type detection and information extraction for binary files. Serves as the entry point for determining which specialized analyzer to use.
-
 ## Requirements
-
 ### Requirement: Magic Number Detection
 The system SHALL identify file types based on magic number signatures.
 
@@ -25,19 +23,11 @@ The system SHALL identify file types based on magic number signatures.
 - **THEN** return "Unknown" file type
 
 ### Requirement: File Size Validation
-The system SHALL validate file size constraints.
+The system SHALL validate file size constraints and return standard fields.
 
-#### Scenario: Empty file
-- **WHEN** binary data has zero length
-- **THEN** return error indicating empty file
-
-#### Scenario: Minimum size check
-- **WHEN** binary data is smaller than minimum header size
-- **THEN** return error indicating file too small for analysis
-
-#### Scenario: Maximum size check
-- **WHEN** binary data exceeds reasonable size limits (e.g., 500 MB)
-- **THEN** return warning or error about large file size
+#### Scenario: File size
+- **WHEN** analyzing any file
+- **THEN** return `Format` and `Size` using primary keys.
 
 ### Requirement: Basic File Information
 The system SHALL extract basic file metadata.
@@ -77,10 +67,9 @@ The system SHALL provide clear error messages for detection failures.
 ### FileInfo Type
 ```typescript
 {
-  file_type: "PE" | "MSI" | "DMG" | "Unknown",
-  file_size: number,
-  format_version?: string,
-  detected_format?: string
+  Format: "PE" | "MSI" | "DMG" | "DEB" | "RPM" | "Unknown" | "Invalid binary",
+  Size: number,
+  FormatVersion?: string
 }
 ```
 
@@ -89,7 +78,7 @@ The system SHALL provide clear error messages for detection failures.
 {
   error: string,
   details?: string,
-  file_type?: string
+  Format?: string
 }
 ```
 

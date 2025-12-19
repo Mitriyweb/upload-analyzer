@@ -110,7 +110,7 @@ Opens at <http://localhost:8888/public/> with:
 ### Manual Testing
 
 1. Open the dev or production server
-2. Upload a binary file (.exe, .dll, .sys, .elf, etc.)
+2. Upload a binary file (.exe, .msi, .dmg, .deb, .rpm)
 3. View analysis results
 
 ## Publishing to NPM
@@ -165,7 +165,10 @@ upload-analyzer/
 ├── src/                    # Rust source code
 │   ├── lib.rs             # Main entry point
 │   ├── pe.rs              # PE file analysis
-│   └── msi.rs             # MSI detection
+│   ├── msi.rs              # MSI detection
+│   ├── dmg.rs              # DMG support
+│   ├── deb.rs              # DEB support
+│   └── rpm.rs              # RPM support
 │
 ├── dev/                    # Development demo
 │   ├── index.html         # Dev page

@@ -5,8 +5,8 @@
 // ========== Basic File Info Types ==========
 
 export interface FileInfo {
-  type: string;
-  size: string;
+  Format: string;
+  Size: string;
 }
 
 // ========== PE File Analysis Types ==========
@@ -15,7 +15,7 @@ export interface PEAnalysis {
   // Basic Format
   Format: "PE";
   Architecture: "x86" | "x64";
-  
+
   // File Header
   Machine?: string;
   NumberOfSections?: string;
@@ -24,14 +24,14 @@ export interface PEAnalysis {
   PointerToSymbolTable?: string;
   NumberOfSymbols?: string;
   Timestamp?: string;
-  
+
   // Optional Header
   EntryPoint?: string;
   ImageBase?: string;
   SizeOfImage?: string;
   Subsystem?: string;
   DllCharacteristics?: string;
-  
+
   // Version Information
   HasVersionInfo?: "true" | "false";
   HasResources?: "true" | "false";
@@ -42,7 +42,7 @@ export interface PEAnalysis {
   FileFlags?: string;
   FileOS?: string;
   FileType?: string;
-  
+
   // String Version Info
   CompanyName?: string;
   ProductName?: string;
@@ -54,27 +54,23 @@ export interface PEAnalysis {
   Comments?: string;
   PrivateBuild?: string;
   SpecialBuild?: string;
-  
-  // Aliases
-  ProgramName?: string;
-  Vendor?: string;
-  Publisher?: string;
-  Version?: string;
-  
+
+  // No aliases - use primary keys above
+
   // Digital Signature
   SignedBy?: string;
-  
+
   // Installer Detection
   InstallerType?: "Inno Setup" | "NSIS (Nullsoft)" | "InstallShield" | "WiX Toolset" | "Wise Installer" | "Setup Factory" | "Smart Install Maker";
   EmbeddedMSI?: "true" | "false";
   MSIOffset?: string;
-  
+
   // Translation/Language
   TranslationCount?: string;
   Language?: string;
   StringsCount?: string;
   NoStringsFound?: "true" | "false";
-  
+
   // Debug fields (when present)
   Translation_0?: string;
   StringsInTranslation_0?: string;
@@ -82,7 +78,7 @@ export interface PEAnalysis {
   [key: `Debug_${number}_${string}`]: string | undefined;
   [key: `Translation_${number}`]: string | undefined;
   [key: `StringsInTranslation_${number}`]: string | undefined;
-  
+
   // Error states
   VersionInfoError?: string;
   ResourcesError?: string;
@@ -95,24 +91,33 @@ export interface MSIAnalysis {
   // Basic Format
   Format: "MSI";
   Architecture: "Windows Installer Package";
-  
-  // MSI Package Information
+
+  // Standard Metadata
+  ProductName?: string;
+  ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
+  CompanyName?: string;
+  Vendor?: string;
   ProductCode?: string;
   UpgradeCode?: string;
-  ProductVersion?: string;
-  Version?: string;
-  
-  // Product Information
-  ProductName?: string;
-  Product?: string;
-  Manufacturer?: string;
-  CompanyName?: string;
-  Publisher?: string;
+  PackageCode?: string;
+  Title?: string;
   Comments?: string;
-  
+  Keywords?: string;
+
+  // Inventory Counts
+  FileCount?: string;
+  TotalFileSize?: string;
+  ComponentCount?: string;
+  FeatureCount?: string;
+
+  // Requirements
+  LaunchConditions?: string;
+
   // Installer Framework
   InstallerFramework?: "WiX Toolset" | "InstallShield" | "Advanced Installer";
-  
+
   // Compound File
   HasCompoundFile?: "true" | "false";
   HasSummaryInfo?: "true" | "false";
@@ -125,35 +130,31 @@ export interface DMGAnalysis {
   // Basic Format
   Format: "DMG";
   Architecture: "macOS Disk Image";
-  
+
   // DMG Information
   ImageType?: string;
   Compression?: string;
   HasKolySignature?: "true" | "false";
   KolyOffset?: string;
   DMGVersion?: string;
-  
-  // Product Information (matching PE fields)
+
+  // Standard Metadata
   ProductName?: string;
-  ProgramName?: string;
-  DisplayName?: string;
-  FileDescription?: string;
-  
-  // Version Information (matching PE fields)
   ProductVersion?: string;
-  FileVersion?: string;
-  FileVersionNumber?: string;
-  ProductVersionNumber?: string;
-  
-  // Company Information (matching PE fields)
-  CompanyName?: string;
   Manufacturer?: string;
-  Vendor?: string;
   Publisher?: string;
-  
+  CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
+
   // Legal Information
   LegalCopyright?: string;
-  
+
   // macOS Specific
   BundleIdentifier?: string;
   ApplicationBundle?: string;
@@ -165,6 +166,71 @@ export interface DMGAnalysis {
   MinimumSystemVersion?: string;
 }
 
+// ========== DEB File Analysis Types ==========
+
+export interface DEBAnalysis {
+  // Basic Format
+  Format: "DEB";
+  Architecture?: string;
+
+  // DEB Package Information
+  Package?: string;
+  Version?: string;
+  Maintainer?: string;
+  Description?: string;
+  Section?: string;
+  Priority?: string;
+  Depends?: string;
+  Homepage?: string;
+
+  // Standard Metadata
+  ProductName?: string;
+  ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
+  CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
+}
+
+// ========== RPM File Analysis Types ==========
+
+export interface RPMAnalysis {
+  // Basic Format
+  Format: "RPM";
+  Architecture?: string;
+
+  // RPM Package Information
+  Package?: string;
+  Version?: string;
+  Release?: string;
+  Vendor?: string;
+  Summary?: string;
+  License?: string;
+  GroupName?: string;
+  Url?: string;
+  SourceRpm?: string;
+
+  // Standard Metadata
+  ProductName?: string;
+  ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
+  CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
+}
+
 // ========== Error Response ==========
 
 export interface AnalysisError {
@@ -173,10 +239,12 @@ export interface AnalysisError {
 
 // ========== Union Types ==========
 
-export type FileAnalysis = 
-  | PEAnalysis 
-  | MSIAnalysis 
+export type FileAnalysis =
+  | PEAnalysis
+  | MSIAnalysis
   | DMGAnalysis
+  | DEBAnalysis
+  | RPMAnalysis
   | AnalysisError;
 
 // ========== WASM Module Interface ==========
@@ -186,21 +254,21 @@ export interface UploadAnalyzerWASM {
    * Initialize panic hook for better error messages
    */
   init_panic_hook(): void;
-  
+
   /**
    * Get basic file type and size information
    * @param data - File data as Uint8Array
    * @returns JSON string containing file type and size
    */
   get_file_info(data: Uint8Array): string;
-  
+
   /**
    * Analyze PE/MSI file and extract metadata
    * @param data - File data as Uint8Array
    * @returns JSON string containing detailed metadata
    */
   analyze_pe_file(data: Uint8Array): string;
-  
+
   /**
    * Analyze any supported file format (alias for analyze_pe_file)
    * @param data - File data as Uint8Array
@@ -208,4 +276,3 @@ export interface UploadAnalyzerWASM {
    */
   analyze_file(data: Uint8Array): string;
 }
-

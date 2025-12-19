@@ -1,6 +1,6 @@
 {
   "name": "upload-analyzer",
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "PE/MSI/DMG file analyzer compiled to WebAssembly with TypeScript support",
   "main": "pkg/upload_analyzer.js",
   "types": "src/ts/types/index.d.ts",
