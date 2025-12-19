@@ -3,12 +3,13 @@
  * Runtime implementations for type guards and parsers
  */
 
-import type { 
+import type {
   FileInfo,
-  FileAnalysis, 
-  PEAnalysis, 
+  FileAnalysis,
+  PEAnalysis,
   MSIAnalysis,
   DMGAnalysis,
+  DEBAnalysis,
   AnalysisError
 } from './types';
 
@@ -24,6 +25,10 @@ export function isMSIAnalysis(analysis: FileAnalysis): analysis is MSIAnalysis {
 
 export function isDMGAnalysis(analysis: FileAnalysis): analysis is DMGAnalysis {
   return 'Format' in analysis && analysis.Format === 'DMG';
+}
+
+export function isDEBAnalysis(analysis: FileAnalysis): analysis is DEBAnalysis {
+  return 'Format' in analysis && analysis.Format === 'DEB';
 }
 
 export function isAnalysisError(analysis: FileAnalysis): analysis is AnalysisError {

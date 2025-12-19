@@ -9,6 +9,7 @@ This document lists all file formats currently supported by the Upload Analyzer.
 | **PE** | Windows | ✅ Full Support | `pe.rs` | `PEAnalyzer` |
 | **MSI** | Windows | ✅ Full Support | `msi.rs` | `MSIAnalyzer` |
 | **DMG** | macOS | ✅ Full Support | `dmg.rs` | `DMGAnalyzer` |
+| **DEB** | Linux | ✅ Full Support | `deb.rs` | `DEBAnalyzer` |
 | **ELF** | Linux/Unix | ❌ Not Supported | - | - |
 | **Mach-O** | macOS | ❌ Not Supported | - | - |
 
