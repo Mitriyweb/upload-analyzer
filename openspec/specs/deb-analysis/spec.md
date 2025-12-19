@@ -1,31 +1,21 @@
 # Capability: DEB File Analysis
 
-## Overview
+## Purpose
 Provides analysis of Debian (.deb) packages. Extracts package metadata, version information, and architecture details from the control file.
-
-## ADDED Requirements
-
+## Requirements
 ### Requirement: DEB File Detection
 The system SHALL detect and identify DEB file format from binary data.
 
 #### Scenario: Valid DEB file
 - **WHEN** binary data starts with `!<arch>\n` and contains a `debian-binary` member
-- **THEN** return file type as "DEB"
-
-#### Scenario: Invalid DEB file
-- **WHEN** binary data lacks the DEB signature
-- **THEN** return error indicating unsupported or invalid format
+- **THEN** return `Format` as "DEB"
 
 ### Requirement: DEB Metadata Extraction
-The system SHALL extract metadata from the `control` file within the `control.tar.gz` (or similar) member of the DEB archive.
+The system SHALL extract metadata from the `control` file.
 
 #### Scenario: Standard DEB package
 - **WHEN** DEB file contains a valid `control` file
-- **THEN** extract Package, Version, Architecture, Maintainer, and Description
-
-#### Scenario: Missing control file
-- **WHEN** DEB file lacks a `control` file or it's unreadable
-- **THEN** return error indicating metadata extraction failure
+- **THEN** extract Package, Version, Architecture, Maintainer, and Description, and map them to standard metadata fields (`ProductName`, `ProductVersion`, etc.) without aliasing.
 
 ### Requirement: Package Architecture Identification
 The system SHALL identify the target architecture from the DEB metadata.
@@ -39,7 +29,7 @@ The system SHALL identify the target architecture from the DEB metadata.
 ### DEBAnalysis Type
 ```typescript
 {
-  file_type: "DEB",
+  Format: "DEB",
   architecture: string,
   Package: string,
   Version: string,
@@ -47,7 +37,12 @@ The system SHALL identify the target architecture from the DEB metadata.
   Description?: string,
   Depends?: string,
   Section?: string,
-  Priority?: string
+  Priority?: string,
+  ProductName?: string,
+  ProductVersion?: string,
+  Manufacturer?: string,
+  CompanyName?: string,
+  Vendor?: string
 }
 ```
 

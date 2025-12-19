@@ -7,10 +7,9 @@ const RPM_LEAD_MAGIC: &[u8] = &[0xED, 0xAB, 0xEE, 0xDB];
 const RPM_HEADER_MAGIC: &[u8] = &[0x8E, 0xAD, 0xE8, 0x01];
 
 impl FileAnalyzer for RPMAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String> {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "RPM (Red Hat Package Manager)".to_string());
-        info.insert("size".to_string(), data.len().to_string());
+        info.insert("Format".to_string(), "RPM".to_string());
         info
     }
 

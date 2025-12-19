@@ -8,11 +8,7 @@ The system SHALL detect and identify MSI file format from binary data.
 
 #### Scenario: Valid MSI file
 - **WHEN** binary data contains valid CFB signature with MSI-specific streams
-- **THEN** return file type as "MSI" with package information
-
-#### Scenario: Invalid MSI file
-- **WHEN** binary data does not contain valid CFB/MSI structure
-- **THEN** return error indicating invalid MSI format
+- **THEN** return `Format` as "MSI" with package information
 
 ### Requirement: Product Information Extraction
 The system SHALL extract product metadata from the MSI internal database.
@@ -121,8 +117,8 @@ The system SHALL identify the installer framework based on property markers.
 ### MSIAnalysis Type
 ```typescript
 {
-  file_type: "MSI",
-  architecture?: "x86" | "x86_64" | "Any",
+  Format: "MSI",
+  Architecture?: "x86" | "x86_64" | "Any",
   ProductName?: string,
   Manufacturer?: string,
   ProductVersion?: string,

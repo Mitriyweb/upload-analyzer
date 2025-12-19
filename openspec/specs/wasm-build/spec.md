@@ -1,6 +1,6 @@
 # Capability: WebAssembly Build System
 
-## Overview
+## Purpose
 Provides build system for compiling Rust code to WebAssembly with optimization, bundling, and deployment support for both NPM package distribution and browser usage.
 
 ## Requirements

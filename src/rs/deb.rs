@@ -8,10 +8,9 @@ use crate::{FileAnalyzer, MetadataResult};
 pub struct DEBAnalyzer;
 
 impl FileAnalyzer for DEBAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String> {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "DEB (Debian Package)".to_string());
-        info.insert("size".to_string(), data.len().to_string());
+        info.insert("Format".to_string(), "DEB".to_string());
         info
     }
 

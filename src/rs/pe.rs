@@ -23,10 +23,9 @@ const PATTERN_SMART_INSTALL: &[u8] = b"Smart Install Maker";
 pub struct PEAnalyzer;
 
 impl FileAnalyzer for PEAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String> {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "PE (Windows Executable)".to_string());
-        info.insert("size".to_string(), data.len().to_string());
+        info.insert("Format".to_string(), "PE".to_string());
         info
     }
 

@@ -1,10 +1,8 @@
 # Capability: TypeScript Integration
 
-## Overview
+## Purpose
 Provides TypeScript type definitions, type guards, and helper functions for type-safe usage of the WASM analyzer in TypeScript projects.
-
 ## Requirements
-
 ### Requirement: Type Definitions
 The system SHALL provide comprehensive TypeScript type definitions for all analysis results.
 
@@ -25,23 +23,11 @@ The system SHALL provide comprehensive TypeScript type definitions for all analy
 - **THEN** provide FileAnalysis union type covering all possible result types
 
 ### Requirement: Type Guards
-The system SHALL provide runtime type guard functions for result discrimination.
+The system SHALL provide type-safe access to standardized metadata fields.
 
-#### Scenario: PE result detection
-- **WHEN** checking if result is PEAnalysis
-- **THEN** `isPEAnalysis()` function returns true for PE results
-
-#### Scenario: MSI result detection
-- **WHEN** checking if result is MSIAnalysis
-- **THEN** `isMSIAnalysis()` function returns true for MSI results
-
-#### Scenario: DMG result detection
-- **WHEN** checking if result is DMGAnalysis
-- **THEN** `isDMGAnalysis()` function returns true for DMG results
-
-#### Scenario: Error detection
-- **WHEN** checking if result is error
-- **THEN** `isAnalysisError()` function returns true for error objects
+#### Scenario: Accessing Format
+- **WHEN** using `PEAnalysis` or any format result
+- **THEN** field `Format` SHALL be available and contain the format name.
 
 ### Requirement: Parser Functions
 The system SHALL provide helper functions for parsing JSON results.

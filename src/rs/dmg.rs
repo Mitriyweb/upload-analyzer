@@ -11,13 +11,12 @@ const MIN_DMG_SIZE: usize = 512;
 pub struct DMGAnalyzer;
 
 impl FileAnalyzer for DMGAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String> {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "DMG (Apple Disk Image)".to_string());
-        info.insert("size".to_string(), data.len().to_string());
+        info.insert("Format".to_string(), "DMG".to_string());
         info
     }
-    
+
     fn parse_metadata(data: &[u8]) -> MetadataResult {
         parse_dmg_metadata(data)
     }
@@ -27,15 +26,15 @@ pub fn is_dmg_file(data: &[u8]) -> bool {
     if data.len() < MIN_DMG_SIZE {
         return false;
     }
-    
+
     if data.len() >= DMG_KOLY_OFFSET_SIZE {
         let end_offset = data.len() - DMG_KOLY_OFFSET_SIZE;
-        
+
         if &data[end_offset..end_offset + 4] == DMG_KOLY_SIGNATURE {
             return true;
         }
     }
-    
+
     if data.len() >= 4
         && (data[0..4] == [0x78, 0x01, 0x73, 0x0D] ||
            data[0..4] == [0x78, 0x9C, 0xEC, 0xBD] ||
@@ -54,25 +53,25 @@ pub fn is_dmg_file(data: &[u8]) -> bool {
             return true;
         }
     }
-    
+
     false
 }
 
 fn parse_dmg_metadata(data: &[u8]) -> MetadataResult {
     let mut meta = HashMap::new();
-    
+
     meta.insert("Format".into(), "DMG".into());
     meta.insert("Architecture".into(), "macOS Disk Image".into());
-    
+
     if data.len() >= 4 {
-        let compression = if data[0..2] == [0x78, 0x01] || 
-                            data[0..2] == [0x78, 0x5E] || 
-                            data[0..2] == [0x78, 0x9C] || 
+        let compression = if data[0..2] == [0x78, 0x01] ||
+                            data[0..2] == [0x78, 0x5E] ||
+                            data[0..2] == [0x78, 0x9C] ||
                             data[0..2] == [0x78, 0xDA] {
             "zlib"
         } else if data[0..2] == [0x1F, 0x8B] {
             "gzip"
-        } else if data[0..4] == [0x42, 0x5A, 0x68, 0x39] || 
+        } else if data[0..4] == [0x42, 0x5A, 0x68, 0x39] ||
                   data[0..4] == [0x42, 0x5A, 0x68, 0x31] {
             "bzip2"
         } else if data[0] == 0x00 && data[1] == 0x00 {
@@ -80,17 +79,17 @@ fn parse_dmg_metadata(data: &[u8]) -> MetadataResult {
         } else {
             "unknown"
         };
-        
+
         meta.insert("Compression".into(), compression.into());
     }
-    
+
     if data.len() >= 512 {
         let koly_offset = data.len() - 512;
-        
+
         if &data[koly_offset..koly_offset + 4] == b"koly" {
             meta.insert("HasKolySignature".into(), "true".into());
             meta.insert("KolyOffset".into(), koly_offset.to_string());
-            
+
             if koly_offset + 8 <= data.len() {
                 let version = u32::from_be_bytes([
                     data[koly_offset + 4],
@@ -102,11 +101,11 @@ fn parse_dmg_metadata(data: &[u8]) -> MetadataResult {
             }
         }
     }
-    
+
     meta.insert("ImageType".into(), "UDIF".into());
-    
+
     extract_product_info(data, &mut meta);
-    
+
     Ok(meta)
 }
 
@@ -114,35 +113,35 @@ fn extract_product_info(data: &[u8], meta: &mut HashMap<String, String>) {
     if let Some(plist_data) = find_plist_in_dmg(data) {
         parse_plist_properly(&plist_data, meta);
     }
-    
+
     if !meta.contains_key("ProductName") || !meta.contains_key("ProductVersion") {
         let data_str = String::from_utf8_lossy(data);
         extract_plist_info(&data_str, meta);
         extract_version_strings(&data_str, meta);
         extract_bundle_info(&data_str, meta);
         extract_developer_info(&data_str, meta);
-        
+
         if !meta.contains_key("ProductName") {
             extract_app_names(data, meta);
         }
     }
-    
+
     create_field_aliases(meta);
 }
 
 fn find_plist_in_dmg(data: &[u8]) -> Option<Vec<u8>> {
     let data_str = String::from_utf8_lossy(data);
-    
+
     if let Some(info_plist_pos) = data_str.find("Contents/Info.plist") {
         let search_start = info_plist_pos.saturating_sub(100000).max(0);
         let search_end = (info_plist_pos + 100000).min(data.len());
         let search_region = &data[search_start..search_end];
-        
+
         if let Some(plist_data) = find_plist_in_region(search_region) {
             return Some(plist_data);
         }
     }
-    
+
     find_plist_in_region(data)
 }
 
@@ -152,16 +151,16 @@ fn find_plist_in_region(data: &[u8]) -> Option<Vec<u8>> {
         b"<plist version=",
         b"<!DOCTYPE plist",
     ];
-    
+
     let binary_marker = b"bplist";
-    
+
     for marker in xml_markers {
         if let Some(pos) = find_bytes(data, marker) {
             if let Some(end_pos) = find_bytes(&data[pos..], b"</plist>") {
                 let plist_data = &data[pos..pos + end_pos + 8];
-                
+
                 let plist_str = String::from_utf8_lossy(plist_data);
-                if plist_str.contains("CFBundleName") || 
+                if plist_str.contains("CFBundleName") ||
                    plist_str.contains("CFBundleIdentifier") ||
                    plist_str.contains("CFBundleVersion") {
                     return Some(plist_data.to_vec());
@@ -169,12 +168,12 @@ fn find_plist_in_region(data: &[u8]) -> Option<Vec<u8>> {
             }
         }
     }
-    
+
     if let Some(pos) = find_bytes(data, binary_marker) {
         let end = (pos + 50000).min(data.len());
         return Some(data[pos..end].to_vec());
     }
-    
+
     None
 }
 
@@ -189,7 +188,7 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
             let cursor = Cursor::new(plist_data);
             Value::from_reader(cursor)
         });
-    
+
     if let Ok(Value::Dictionary(dict)) = value {
         let keys_to_extract = [
             ("CFBundleName", "ProductName"),
@@ -206,7 +205,7 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
             ("CFBundleIconFile", "IconFile"),
             ("LSMinimumSystemVersion", "MinimumSystemVersion"),
         ];
-        
+
         for (plist_key, meta_key) in &keys_to_extract {
             if let Some(Value::String(s)) = dict.get(plist_key) {
                 let value = s.trim();
@@ -226,19 +225,19 @@ fn parse_plist_properly(plist_data: &[u8], meta: &mut HashMap<String, String>) {
                 }
             }
         }
-        
+
         if !meta.contains_key("ProductName") {
             if let Some(display_name) = meta.get("DisplayName") {
                 meta.insert("ProductName".into(), display_name.clone());
             }
         }
-        
+
         if !meta.contains_key("FileVersion") {
             if let Some(product_version) = meta.get("ProductVersion") {
                 meta.insert("FileVersion".into(), product_version.clone());
             }
         }
-        
+
         if !meta.contains_key("CompanyName") {
             if let Some(bundle_id) = meta.get("BundleIdentifier") {
                 let parts: Vec<&str> = bundle_id.split('.').collect();
@@ -264,7 +263,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>CFBundleDisplayName</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -278,7 +277,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>CFBundleShortVersionString</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -290,7 +289,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if !meta.contains_key("ProductVersion") {
         if let Some(start) = data_str.find("<key>CFBundleVersion</key>") {
             if let Some(value_start) = data_str[start..].find("<string>") {
@@ -305,7 +304,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>NSHumanReadableCopyright</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -316,7 +315,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>CFBundleGetInfoString</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -327,7 +326,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>LSApplicationCategoryType</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -346,7 +345,7 @@ fn extract_plist_info(data_str: &str, meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(start) = data_str.find("<key>NSPrincipalClass</key>") {
         if let Some(value_start) = data_str[start..].find("<string>") {
             if let Some(value_end) = data_str[start + value_start..].find("</string>") {
@@ -381,7 +380,7 @@ fn extract_bundle_info(data_str: &str, meta: &mut HashMap<String, String>) {
                 let bundle_id = &data_str[start + value_start + 8..start + value_start + value_end];
                 if !bundle_id.is_empty() && bundle_id.len() < 200 {
                     meta.insert("BundleIdentifier".into(), bundle_id.trim().to_string());
-                    
+
                     if !meta.contains_key("CompanyName") {
                         let parts: Vec<&str> = bundle_id.split('.').collect();
                         if parts.len() >= 2 {
@@ -409,19 +408,19 @@ fn extract_developer_info(data_str: &str, meta: &mut HashMap<String, String>) {
         "Ltd.",
         "Limited",
     ];
-    
+
     for pattern in &company_patterns {
         if let Some(pos) = data_str.find(pattern) {
             let start = pos.saturating_sub(100).max(0);
             let end = (pos + 100).min(data_str.len());
             let context = &data_str[start..end];
-            
+
             if pattern == &"Copyright" {
                 if let Some(copy_pos) = context.find("Copyright") {
                     let after_copyright = &context[copy_pos + 9..];
                     let cleaned = after_copyright
                         .trim_start_matches(|c: char| c.is_numeric() || c == '©' || c == '(' || c == ')' || c == '-' || c.is_whitespace());
-                    
+
                     if let Some(company_end) = cleaned.find(['\n', '\0', '.']) {
                         let company = &cleaned[..company_end];
                         if company.len() > 2 && company.len() < 100 && !meta.contains_key("CompanyName") {
@@ -437,22 +436,22 @@ fn extract_developer_info(data_str: &str, meta: &mut HashMap<String, String>) {
 
 fn extract_app_names(data: &[u8], meta: &mut HashMap<String, String>) {
     let data_str = String::from_utf8_lossy(data);
-    
-    let skip_names = ["www", "html", "com", "http", "https", "ftp", "temp", "tmp", 
+
+    let skip_names = ["www", "html", "com", "http", "https", "ftp", "temp", "tmp",
                       "test", "example", "demo", "data", "cache", "lib", "bin", "usr", "var",
                       "resources", "frameworks", "macos", "contents", "applications"];
-    
+
     for match_pos in data_str.match_indices(".app") {
         let pos = match_pos.0;
         let start = pos.saturating_sub(100);
-        
+
         let before = &data_str[start..pos];
         if let Some(last_slash) = before.rfind('/') {
             let app_name = &before[last_slash + 1..];
             let app_name_lower = app_name.to_lowercase();
-            
-            if app_name.len() > 2 && app_name.len() < 100 
-                && app_name.chars().any(|c| c.is_alphabetic()) 
+
+            if app_name.len() > 2 && app_name.len() < 100
+                && app_name.chars().any(|c| c.is_alphabetic())
                 && app_name.chars().filter(|c| c.is_alphabetic()).count() >= 3
                 && app_name.chars().all(|c| c.is_alphanumeric() || c.is_whitespace() || c == '-' || c == '_')
                 && !skip_names.contains(&app_name_lower.as_str())
@@ -464,29 +463,29 @@ fn extract_app_names(data: &[u8], meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if !meta.contains_key("ProductName") {
         let search_limit = 16384.min(data.len());
         let mut current_string = String::new();
         let mut valid_strings: Vec<String> = Vec::new();
-        
+
         let skip_patterns = ["http", "www", "https", "ftp", "com.", "org.", ".app", "plist", "xml"];
-        
+
         for &byte in &data[..search_limit] {
             if (32..=126).contains(&byte) {
                 current_string.push(byte as char);
             } else if !current_string.is_empty() {
                 if current_string.len() >= 5 && current_string.len() <= 100 {
                     let lower = current_string.to_lowercase();
-                    
-                    let has_installer_keyword = current_string.contains("Installer") || 
+
+                    let has_installer_keyword = current_string.contains("Installer") ||
                                                current_string.contains("Setup");
-                    
-                    let is_clean_string = current_string.chars().filter(|c| c.is_alphabetic()).count() > 3 && 
+
+                    let is_clean_string = current_string.chars().filter(|c| c.is_alphabetic()).count() > 3 &&
                                          current_string.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace()).count() == current_string.len();
-                    
+
                     let not_skipped = !skip_patterns.iter().any(|pat| lower.contains(pat));
-                    
+
                     if (has_installer_keyword || is_clean_string) && not_skipped {
                         valid_strings.push(current_string.clone());
                     }
@@ -494,7 +493,7 @@ fn extract_app_names(data: &[u8], meta: &mut HashMap<String, String>) {
                 current_string.clear();
             }
         }
-        
+
         if let Some(name) = valid_strings.iter().find(|s| s.contains("Installer") || s.contains("Setup")) {
             meta.insert("ProductName".into(), name.clone());
         } else if let Some(name) = valid_strings.first() {
@@ -516,7 +515,7 @@ fn create_field_aliases(meta: &mut HashMap<String, String>) {
             }
         }
     }
-    
+
     if let Some(company) = meta.get("CompanyName").cloned() {
         if !meta.contains_key("Vendor") {
             meta.insert("Vendor".into(), company.clone());
@@ -525,7 +524,7 @@ fn create_field_aliases(meta: &mut HashMap<String, String>) {
             meta.insert("Publisher".into(), company);
         }
     }
-    
+
     if let Some(version) = meta.get("ProductVersion").cloned() {
         if !meta.contains_key("FileVersion") {
             meta.insert("FileVersion".into(), version.clone());
@@ -537,7 +536,7 @@ fn create_field_aliases(meta: &mut HashMap<String, String>) {
             meta.insert("ProductVersionNumber".into(), version);
         }
     }
-    
+
     if !meta.contains_key("FileDescription") {
         meta.insert("FileDescription".into(), "Apple Disk Image".into());
     }

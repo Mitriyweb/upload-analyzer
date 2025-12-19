@@ -263,7 +263,7 @@ try {
   const analysis = analyzer.analyze_pe_file(buffer);
   const result = JSON.parse(analysis);
 
-  console.log('File Type:', result.file_type);
+  console.log('Format:', result.Format);
   console.log('Architecture:', result.architecture);
   console.log('Sections:', result.sections);
   console.log('Imports:', result.imports);
@@ -296,7 +296,7 @@ Perform detailed analysis of a PE file.
 - `data`: Uint8Array containing the PE file data
 
 **Returns:** JSON string with analysis results including:
-- `file_type`: Type of file (PE, ELF, etc.)
+- `Format`: Type of file (PE, MSI, DMG, DEB, RPM)
 - `architecture`: CPU architecture (x86, x86_64)
 - `sections`: Array of section information
 - `imports`: List of imported functions
@@ -308,7 +308,7 @@ Perform detailed analysis of a PE file.
 
 ```json
 {
-  "file_type": "PE",
+  "Format": "PE",
   "architecture": "x86_64",
   "is_64bit": true,
   "entry_point": 4096,

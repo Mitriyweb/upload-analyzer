@@ -5,8 +5,8 @@
 // ========== Basic File Info Types ==========
 
 export interface FileInfo {
-  type: string;
-  size: string;
+  Format: string;
+  Size: string;
 }
 
 // ========== PE File Analysis Types ==========

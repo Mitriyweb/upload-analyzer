@@ -15,10 +15,9 @@ type CfbFile<'a> = CompoundFile<Cursor<&'a [u8]>>;
 pub struct MSIAnalyzer;
 
 impl FileAnalyzer for MSIAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String> {
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String> {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "MSI (Windows Installer)".to_string());
-        info.insert("size".to_string(), data.len().to_string());
+        info.insert("Format".to_string(), "MSI".to_string());
         info
     }
 

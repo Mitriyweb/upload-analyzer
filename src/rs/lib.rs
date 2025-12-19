@@ -12,7 +12,7 @@ use wasm_bindgen::prelude::*;
 pub type MetadataResult = Result<HashMap<String, String>, String>;
 
 pub trait FileAnalyzer {
-    fn get_file_info(data: &[u8]) -> HashMap<String, String>;
+    fn get_file_info(_data: &[u8]) -> HashMap<String, String>;
     fn parse_metadata(data: &[u8]) -> MetadataResult;
 }
 
@@ -57,7 +57,7 @@ pub fn analyze_file(data: &[u8]) -> String {
 
 #[wasm_bindgen]
 pub fn get_file_info(data: &[u8]) -> String {
-    let info = if msi::is_msi_file(data) {
+    let mut info = if msi::is_msi_file(data) {
         msi::MSIAnalyzer::get_file_info(data)
     } else if dmg::is_dmg_file(data) {
         dmg::DMGAnalyzer::get_file_info(data)
@@ -70,15 +70,17 @@ pub fn get_file_info(data: &[u8]) -> String {
             Object::PE(_) => pe::PEAnalyzer::get_file_info(data),
             _ => {
                 let mut info = HashMap::new();
-                info.insert("type".to_string(), "Unsupported".to_string());
+                info.insert("Format".to_string(), "Unsupported".to_string());
                 info
             }
         }
     } else {
         let mut info = HashMap::new();
-        info.insert("type".to_string(), "Invalid binary".to_string());
+        info.insert("Format".to_string(), "Invalid binary".to_string());
         info
     };
+
+    info.insert("Size".to_string(), data.len().to_string());
 
     serde_json::to_string(&info).unwrap_or_else(|_| "{}".to_string())
 }

@@ -1,31 +1,21 @@
 # Capability: RPM File Analysis
 
-## Overview
+## Purpose
 Provides analysis of RPM (Red Hat Package Manager) packages. Extracts package metadata, version information, and architecture details from the RPM header.
-
-## ADDED Requirements
-
+## Requirements
 ### Requirement: RPM File Detection
 The system SHALL detect and identify RPM file format from binary data.
 
 #### Scenario: Valid RPM file
 - **WHEN** binary data starts with `\xed\xab\xee\xdb` (RPM Lead magic)
-- **THEN** return file type as "RPM"
-
-#### Scenario: Invalid RPM file
-- **WHEN** binary data lacks the RPM Lead magic
-- **THEN** return error indicating unsupported or invalid format
+- **THEN** return `Format` as "RPM"
 
 ### Requirement: RPM Metadata Extraction
-The system SHALL extract metadata from the RPM Header segment.
+The system SHALL extract metadata from the RPM Header.
 
 #### Scenario: Standard RPM package
 - **WHEN** RPM file contains a valid Header structure
-- **THEN** extract Name, Version, Release, Architecture, Vendor, and Summary
-
-#### Scenario: Corrupt RPM header
-- **WHEN** RPM Header is malformed or inaccessible
-- **THEN** return error indicating metadata extraction failure
+- **THEN** extract Name, Version, Release, and Vendor, mapping them to standard metadata fields (`ProductName`, `ProductVersion`, `CompanyName`) without aliasing.
 
 ### Requirement: Package Architecture Identification
 The system SHALL identify the target architecture from the RPM metadata tags.
@@ -50,7 +40,6 @@ The system SHALL identify the target architecture from the RPM metadata tags.
   GroupName?: string,
   Url?: string,
   SourceRpm?: string,
-  // Compatibility Aliases
   ProductName?: string,
   ProductVersion?: string,
   CompanyName?: string

@@ -61,13 +61,13 @@ async function handleFile(file) {
         html += '<ul>';
         html += `<li><strong>Filename:</strong> ${file.name}</li>`;
         html += `<li><strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB (${file.size.toLocaleString()} bytes)</li>`;
-        html += `<li><strong>Type:</strong> ${info.type || 'Unknown'}</li>`;
+        html += `<li><strong>Format:</strong> ${info.Format || 'Unknown'}</li>`;
         html += '</ul>';
 
         html += '<h3>Basic Information</h3>';
         html += `<pre>${JSON.stringify(info, null, 2)}</pre>`;
 
-        if (info.type && (info.type.includes('PE') || info.type.includes('MSI') || info.type.includes('DMG'))) {
+        if (info.Format && (info.Format.includes('PE') || info.Format.includes('MSI') || info.Format.includes('DMG') || info.Format === 'DEB' || info.Format === 'RPM')) {
             try {
                 const analysisJson = analyze_file(data);
                 const analysis = JSON.parse(analysisJson);

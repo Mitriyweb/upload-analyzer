@@ -1,20 +1,14 @@
 # Capability: DMG File Analysis
 
-## Overview
+## Purpose
 Provides analysis of Apple Disk Image (DMG) files. Extracts metadata, volume information, and application bundle details from macOS disk images.
-
 ## Requirements
-
 ### Requirement: DMG File Detection
 The system SHALL detect and identify DMG file format from binary data.
 
 #### Scenario: Valid DMG file
 - **WHEN** binary data contains valid DMG signature and structure
-- **THEN** return file type as "DMG" with volume information
-
-#### Scenario: Invalid DMG file
-- **WHEN** binary data does not contain valid DMG structure
-- **THEN** return error indicating invalid DMG format
+- **THEN** return `Format` as "DMG"
 
 ### Requirement: Volume Information Extraction
 The system SHALL extract volume metadata from DMG files.
@@ -54,15 +48,7 @@ The system SHALL identify target CPU architectures from DMG contents.
 
 #### Scenario: Universal binary
 - **WHEN** DMG contains universal binary (multiple architectures)
-- **THEN** return list of supported architectures (x86_64, ARM64)
-
-#### Scenario: Single architecture
-- **WHEN** DMG contains single-architecture binary
-- **THEN** return specific architecture
-
-#### Scenario: Apple Silicon native
-- **WHEN** DMG contains ARM64-only binary
-- **THEN** return architecture as "ARM64"
+- **THEN** return `Architecture` as "Universal" or a specific architecture if a primary one is detected.
 
 ### Requirement: Minimum macOS Version
 The system SHALL extract minimum required macOS version.
@@ -124,24 +110,25 @@ The system SHALL provide clear error messages for DMG analysis failures.
 ### DMGAnalysis Type
 ```typescript
 {
-  file_type: "DMG",
+  Format: "DMG",
   volumeName?: string,
   volumeSize?: number,
-  architecture?: "x86_64" | "ARM64" | "Universal",
-  architectures?: string[],
-  applications?: Array<{
-    name: string,
-    bundleIdentifier?: string,
-    version?: string,
-    shortVersion?: string,
-    minOSVersion?: string,
-    executableName?: string
-  }>,
-  signedBy?: string,
-  teamId?: string,
-  compressionFormat?: string,
-  encrypted?: boolean,
-  createdAt?: string
+  Architecture?: "x86_64" | "ARM64" | "Universal",
+  Architectures?: string[],
+  ProductName?: string,
+  ProductVersion?: string,
+  Manufacturer?: string,
+  Publisher?: string,
+  CompanyName?: string,
+  Vendor?: string,
+  BundleIdentifier?: string,
+  ApplicationBundle?: string,
+  MinimumSystemVersion?: string,
+  SignedBy?: string,
+  TeamId?: string,
+  CompressionFormat?: string,
+  Encrypted?: boolean,
+  CreatedAt?: string
 }
 ```
 
