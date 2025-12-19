@@ -77,13 +77,8 @@ fn parse_control_file(content: &str, meta: &mut HashMap<String, String>) {
                 // but for now we'll just keep them as is.
                 meta.insert(key.to_string(), value.to_string());
 
-                // Compatibility aliases
-                match key {
-                    "Package" => { meta.insert("ProductName".into(), value.to_string()); }
-                    "Version" => { meta.insert("ProductVersion".into(), value.to_string()); }
-                    "Maintainer" => { meta.insert("CompanyName".into(), value.to_string()); }
-                    "Architecture" => { meta.insert("Architecture".into(), value.to_string()); }
-                    _ => {}
+                if key == "Architecture" {
+                    meta.insert("Architecture".into(), value.to_string());
                 }
             }
         }

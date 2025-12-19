@@ -33,16 +33,6 @@ impl FileAnalyzer for RPMAnalyzer {
         // The next structure is the Immutable Header
         parse_header_structure(data, offset, &mut meta)?;
 
-        // Add compatibility aliases
-        if let Some(name) = meta.get("Package") {
-            meta.insert("ProductName".into(), name.clone());
-        }
-        if let Some(version) = meta.get("Version") {
-            meta.insert("ProductVersion".into(), version.clone());
-        }
-        if let Some(vendor) = meta.get("Vendor") {
-            meta.insert("CompanyName".into(), vendor.clone());
-        }
 
         Ok(meta)
     }
@@ -103,12 +93,12 @@ fn parse_header_structure(data: &[u8], offset: usize, meta: &mut HashMap<String,
         match tag {
             1000 => { // NAME
                 if let Some(s) = read_string(data, abs_offset) {
-                    meta.insert("Package".into(), s);
+                    meta.insert("ProductName".into(), s);
                 }
             }
             1001 => { // VERSION
                 if let Some(s) = read_string(data, abs_offset) {
-                    meta.insert("Version".into(), s);
+                    meta.insert("ProductVersion".into(), s);
                 }
             }
             1002 => { // RELEASE

@@ -2,6 +2,11 @@
 
 This directory contains configuration files and guidelines for AI agents working on this project.
 
+## Quick Links
+
+- [AI Rules](file:///Users/dmytro.zvieriev/sandbox/upload-analyzer/.agent/AI_RULES.md)
+- [Rust Guidelines](file:///Users/dmytro.zvieriev/sandbox/upload-analyzer/.agent/workflows/rust-guidelines.md)
+
 ## Purpose
 
 The `.agent` directory is a standard location for AI-specific project configuration:

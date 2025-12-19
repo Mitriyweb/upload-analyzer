@@ -203,11 +203,54 @@ if (isAnalysisError(analysis)) {
 }
 ```
 
+## Metadata Standards
+
+To ensure consistency across different file formats, all analyzers SHOULD attempt to populate the following fields if the data is available.
+
+### Core Fields
+- **`Format`**: The file format (PE, MSI, DMG, DEB, RPM). **Mandatory.**
+- **`Architecture`**: The CPU architecture (x64, x86, arm64, etc.). **Mandatory.**
+- **`ProductName`**: The full name of the software product.
+- **`ProductVersion`**: The version string of the product.
+- **`Manufacturer`**: The name of the organization that produced the software.
+
+### Identity & Publishing
+- **`Publisher`**: The entity responsible for publishing the software.
+- **`CompanyName`**: The legal company name.
+- **`Vendor`**: The software vendor (often used in Linux packages).
+- **`ProductCode`**: A unique identifier for the product (e.g., GUID in MSI).
+- **`UpgradeCode`**: A unique identifier for the product family.
+- **`PackageCode`**: A unique identifier for the specific package.
+
+### Content & Categorization
+- **`Title`**: A short, descriptive title for the package.
+- **`Comments`**: Detailed comments or description of the software.
+- **`Keywords`**: Relevant tags or keywords.
+- **`License`**: The software license.
+- **`InstallerFramework`**: The tool used to build the installer (e.g., WiX, NSIS).
+
+### 🚫 Rule: No Metadata Aliasing
+Analyzers MUST NOT create duplicate mappings for the same data under different keys (aliases). Each piece of metadata should be mapped to its most accurate primary key.
+
+**Bad:**
+```rust
+meta.insert("Manufacturer".into(), value.clone());
+meta.insert("Vendor".into(), value.clone()); // ALIAS - FORBIDDEN
+```
+
+**Good:**
+```rust
+meta.insert("Manufacturer".into(), value); // Use primary key only
+```
+
+---
+
 ## Response Structure
 
 All analyzers follow consistent principles:
 
 - **No placeholders:** Missing data = missing fields
+- **No aliases:** Each value is mapped to its primary key only.
 - **Type indicator:** `Format` field identifies the file type
 - **Architecture field:** Platform-specific architecture info
 - **Optional fields:** Only present when data exists

@@ -15,4 +15,11 @@ Use `@/openspec/AGENTS.md` to learn:
 
 Keep this managed block so 'openspec update' can refresh the instructions.
 
+Use `@/agent/AI_RULES.md` to learn:
+- How to work with code
+- How to work with files
+- How to work with data
+- How to work with metadata
+- How to work with file analysis
+
 <!-- OPENSPEC:END -->

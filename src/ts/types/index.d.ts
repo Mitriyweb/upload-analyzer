@@ -55,11 +55,7 @@ export interface PEAnalysis {
   PrivateBuild?: string;
   SpecialBuild?: string;
 
-  // Aliases
-  ProgramName?: string;
-  Vendor?: string;
-  Publisher?: string;
-  Version?: string;
+  // No aliases - use primary keys above
 
   // Digital Signature
   SignedBy?: string;
@@ -96,19 +92,28 @@ export interface MSIAnalysis {
   Format: "MSI";
   Architecture: "Windows Installer Package";
 
-  // MSI Package Information
+  // Standard Metadata
+  ProductName?: string;
+  ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
+  CompanyName?: string;
+  Vendor?: string;
   ProductCode?: string;
   UpgradeCode?: string;
-  ProductVersion?: string;
-  Version?: string;
-
-  // Product Information
-  ProductName?: string;
-  Product?: string;
-  Manufacturer?: string;
-  CompanyName?: string;
-  Publisher?: string;
+  PackageCode?: string;
+  Title?: string;
   Comments?: string;
+  Keywords?: string;
+
+  // Inventory Counts
+  FileCount?: string;
+  TotalFileSize?: string;
+  ComponentCount?: string;
+  FeatureCount?: string;
+
+  // Requirements
+  LaunchConditions?: string;
 
   // Installer Framework
   InstallerFramework?: "WiX Toolset" | "InstallShield" | "Advanced Installer";
@@ -133,23 +138,19 @@ export interface DMGAnalysis {
   KolyOffset?: string;
   DMGVersion?: string;
 
-  // Product Information (matching PE fields)
+  // Standard Metadata
   ProductName?: string;
-  ProgramName?: string;
-  DisplayName?: string;
-  FileDescription?: string;
-
-  // Version Information (matching PE fields)
   ProductVersion?: string;
-  FileVersion?: string;
-  FileVersionNumber?: string;
-  ProductVersionNumber?: string;
-
-  // Company Information (matching PE fields)
-  CompanyName?: string;
   Manufacturer?: string;
-  Vendor?: string;
   Publisher?: string;
+  CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
 
   // Legal Information
   LegalCopyright?: string;
@@ -182,10 +183,19 @@ export interface DEBAnalysis {
   Depends?: string;
   Homepage?: string;
 
-  // Compatibility Aliases (matching PE/MSI fields)
+  // Standard Metadata
   ProductName?: string;
   ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
   CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
 }
 
 // ========== RPM File Analysis Types ==========
@@ -206,10 +216,19 @@ export interface RPMAnalysis {
   Url?: string;
   SourceRpm?: string;
 
-  // Compatibility Aliases (matching PE/MSI fields)
+  // Standard Metadata
   ProductName?: string;
   ProductVersion?: string;
+  Manufacturer?: string;
+  Publisher?: string;
   CompanyName?: string;
+  Vendor?: string;
+  ProductCode?: string;
+  UpgradeCode?: string;
+  PackageCode?: string;
+  Title?: string;
+  Comments?: string;
+  Keywords?: string;
 }
 
 // ========== Error Response ==========
