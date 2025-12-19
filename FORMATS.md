@@ -10,6 +10,7 @@ This document lists all file formats currently supported by the Upload Analyzer.
 | **MSI** | Windows | ✅ Full Support | `msi.rs` | `MSIAnalyzer` |
 | **DMG** | macOS | ✅ Full Support | `dmg.rs` | `DMGAnalyzer` |
 | **DEB** | Linux | ✅ Full Support | `deb.rs` | `DEBAnalyzer` |
+| **RPM** | Linux | ✅ Full Support | `rpm.rs` | `RPMAnalyzer` |
 | **ELF** | Linux/Unix | ❌ Not Supported | - | - |
 | **Mach-O** | macOS | ❌ Not Supported | - | - |
 
@@ -84,14 +85,51 @@ This document lists all file formats currently supported by the Upload Analyzer.
 
 ---
 
+### DEB (Debian Package)
+
+**Platform:** Linux
+
+**File Extensions:** `.deb`
+
+**Detection:** Archive signature check (`!<arch>\n`) and `debian-binary` member
+
+**Extracted Metadata:**
+- Package, Version, Architecture, Maintainer
+- Description, Depends, Section, Priority
+- Product aliases (compatible with PE fields)
+
+**TypeScript Interface:** `DEBAnalysis`
+
+---
+
+### RPM (Red Hat Package Manager)
+
+**Platform:** Linux
+
+**File Extensions:** `.rpm`
+
+**Detection:** RPM Lead magic bytes (`\xed\xab\xee\xdb`)
+
+**Extracted Metadata:**
+- Package, Version, Release, Architecture
+- Vendor, Summary, License, GroupName
+- Url, SourceRpm
+- Product aliases (compatible with PE fields)
+
+**TypeScript Interface:** `RPMAnalysis`
+
+---
+
 ## Detection Priority
 
 Files are checked in the following order:
 
 1. **MSI** - Fast signature check (8 bytes)
 2. **DMG** - Fast signature check (compression/koly patterns)
-3. **PE** - Goblin parser (comprehensive but slower)
-4. **Other** - Returns unsupported error
+3. **DEB** - Archive signature check
+4. **RPM** - Lead magic bytes
+5. **PE** - Goblin parser (comprehensive but slower)
+6. **Other** - Returns unsupported error
 
 ## Adding New Formats
 
@@ -110,15 +148,13 @@ See `ARCHITECTURE.md` for detailed implementation guide.
 
 ### Metadata Completeness
 
-| Feature | PE | MSI | DMG |
-|---------|----|----|-----|
-| Product Name | ✅ | ✅ | ⚠️ Limited |
-| Version | ✅ | ✅ | ❌ |
-| Company/Vendor | ✅ | ✅ | ❌ |
-| Architecture | ✅ | ⚠️ Package | ⚠️ Image |
-| Digital Signature | ✅ | ❌ | ❌ |
-| Compression Info | ❌ | ❌ | ✅ |
-| GUIDs | ❌ | ✅ | ❌ |
+| Product Name | ✅ | ✅ | ⚠️ Limited | ✅ | ✅ |
+| Version | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Company/Vendor | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Architecture | ✅ | ⚠️ Package | ⚠️ Image | ✅ | ✅ |
+| Digital Signature | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Compression Info | ❌ | ❌ | ✅ | ❌ | ❌ |
+| GUIDs | ❌ | ✅ | ❌ | ❌ | ❌ |
 
 ### Performance
 
@@ -170,8 +206,8 @@ All analyzers follow consistent principles:
 
 Potential future additions:
 
-- **DEB** - Debian packages
-- **RPM** - Red Hat packages
+- **DEB** - Debian packages (Included)
+- **RPM** - Red Hat packages (Included)
 - **APK** - Android packages
 - **IPA** - iOS applications
 - **AppImage** - Linux portable applications

@@ -188,6 +188,30 @@ export interface DEBAnalysis {
   CompanyName?: string;
 }
 
+// ========== RPM File Analysis Types ==========
+
+export interface RPMAnalysis {
+  // Basic Format
+  Format: "RPM";
+  Architecture?: string;
+
+  // RPM Package Information
+  Package?: string;
+  Version?: string;
+  Release?: string;
+  Vendor?: string;
+  Summary?: string;
+  License?: string;
+  GroupName?: string;
+  Url?: string;
+  SourceRpm?: string;
+
+  // Compatibility Aliases (matching PE/MSI fields)
+  ProductName?: string;
+  ProductVersion?: string;
+  CompanyName?: string;
+}
+
 // ========== Error Response ==========
 
 export interface AnalysisError {
@@ -201,6 +225,7 @@ export type FileAnalysis =
   | MSIAnalysis
   | DMGAnalysis
   | DEBAnalysis
+  | RPMAnalysis
   | AnalysisError;
 
 // ========== WASM Module Interface ==========

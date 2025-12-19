@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-Upload Analyzer is a WebAssembly-powered binary file analyzer that provides detailed analysis of PE (Windows executables), MSI (Windows Installer), and DMG (Apple Disk Image) files directly in the browser with native Rust performance.
+Upload Analyzer is a WebAssembly-powered binary file analyzer that provides detailed analysis of PE (Windows executables), MSI (Windows Installer), DMG (Apple Disk Image), DEB (Debian Package), and RPM (Red Hat Package Manager) files directly in the browser with native Rust performance.
 
 ## Tech Stack
 
@@ -11,6 +11,9 @@ Upload Analyzer is a WebAssembly-powered binary file analyzer that provides deta
 - **pelite** - Advanced PE file analysis
 - **cfb** - Compound File Binary format parsing (MSI)
 - **plist** - Apple property list parsing (DMG)
+- **ar** - Archive parsing (DEB)
+- **tar** - Tar archive parsing (DEB/RPM)
+- **flate2** - Compression support (DEB/RPM)
 - **wasm-bindgen** - Rust/JavaScript interop
 
 ### Frontend
@@ -45,7 +48,7 @@ Upload Analyzer is a WebAssembly-powered binary file analyzer that provides deta
 **WASM Module Structure:**
 - All Rust code in `src/rs/`
 - Main entry point: `src/rs/lib.rs`
-- Format-specific modules: `pe.rs`, `msi.rs`, `dmg.rs`
+- Format-specific modules: `pe.rs`, `msi.rs`, `dmg.rs`, `deb.rs`, `rpm.rs`
 - Public API exposed via `wasm-bindgen`
 
 **Type Safety:**
@@ -76,6 +79,8 @@ Upload Analyzer is a WebAssembly-powered binary file analyzer that provides deta
 - PE files: Windows executables (.exe, .dll, .sys)
 - MSI files: Windows Installer packages
 - DMG files: Apple Disk Images
+- DEB files: Debian Packages
+- RPM files: Red Hat Package Manager files
 
 **Key Analysis Features:**
 - File type detection
@@ -118,6 +123,7 @@ Upload Analyzer is a WebAssembly-powered binary file analyzer that provides deta
 - `pelite` - PE-specific analysis
 - `cfb` - MSI/OLE parsing
 - `plist` - DMG/plist parsing
+- `ar`, `tar`, `flate2` - Linux package parsing
 - `wasm-bindgen` - JS interop
 - `serde`/`serde_json` - Serialization
 

@@ -2,6 +2,7 @@ mod msi;
 mod pe;
 mod dmg;
 mod deb;
+mod rpm;
 
 use goblin::Object;
 use std::collections::HashMap;
@@ -34,6 +35,10 @@ fn parse_metadata(buf: &[u8]) -> MetadataResult {
         return deb::DEBAnalyzer::parse_metadata(buf);
     }
 
+    if rpm::is_rpm_file(buf) {
+        return rpm::RPMAnalyzer::parse_metadata(buf);
+    }
+
     let obj = Object::parse(buf).map_err(|e| format!("Failed to parse file: {}", e))?;
 
     match obj {
@@ -58,6 +63,8 @@ pub fn get_file_info(data: &[u8]) -> String {
         dmg::DMGAnalyzer::get_file_info(data)
     } else if deb::is_deb_file(data) {
         deb::DEBAnalyzer::get_file_info(data)
+    } else if rpm::is_rpm_file(data) {
+        rpm::RPMAnalyzer::get_file_info(data)
     } else if let Ok(obj) = Object::parse(data) {
         match obj {
             Object::PE(_) => pe::PEAnalyzer::get_file_info(data),

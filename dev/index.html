@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,16 +13,19 @@
             padding: 20px;
             background: #f5f5f5;
         }
+
         .container {
             background: white;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             color: #333;
             margin-bottom: 20px;
         }
+
         .dev-badge {
             display: inline-block;
             background: #ff6b6b;
@@ -32,6 +36,7 @@
             font-weight: 600;
             margin-left: 10px;
         }
+
         .upload-area {
             border: 2px dashed #ccc;
             border-radius: 8px;
@@ -41,20 +46,25 @@
             cursor: pointer;
             transition: all 0.3s;
         }
+
         .upload-area:hover {
             border-color: #007bff;
             background: #f8f9fa;
         }
+
         .upload-area.dragover {
             border-color: #28a745;
             background: #e9f7ef;
         }
+
         #fileInput {
             display: none;
         }
+
         .results {
             margin-top: 30px;
         }
+
         pre {
             background: #f8f9fa;
             padding: 15px;
@@ -62,6 +72,7 @@
             overflow-x: auto;
             border: 1px solid #dee2e6;
         }
+
         .button {
             background: #007bff;
             color: white;
@@ -71,9 +82,11 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         .button:hover {
             background: #0056b3;
         }
+
         .error {
             color: #dc3545;
             padding: 10px;
@@ -82,6 +95,7 @@
             border-radius: 4px;
             margin: 10px 0;
         }
+
         .info {
             color: #004085;
             padding: 10px;
@@ -92,19 +106,20 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🔍 Upload Analyzer Demo <span class="dev-badge">DEV</span></h1>
         <p>Upload a binary file to analyze its structure and contents.</p>
-        
+
         <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
             <input type="file" id="fileInput">
             <p>📁 Click to select a file or drag and drop here</p>
-            <p style="color: #666; font-size: 14px;">Supported: PE (Windows), MSI</p>
+            <p style="color: #666; font-size: 14px;">Supported: PE, MSI, DMG, DEB, RPM</p>
         </div>
 
         <div id="status"></div>
-        
+
         <div class="results" id="results" style="display: none;">
             <h2>Analysis Results</h2>
             <div id="output"></div>
@@ -113,4 +128,5 @@
 
     <script type="module" src="./app.js"></script>
 </body>
+
 </html>

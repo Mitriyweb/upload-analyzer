@@ -10,6 +10,7 @@ import type {
   MSIAnalysis,
   DMGAnalysis,
   DEBAnalysis,
+  RPMAnalysis,
   AnalysisError
 } from './types';
 
@@ -29,6 +30,10 @@ export function isDMGAnalysis(analysis: FileAnalysis): analysis is DMGAnalysis {
 
 export function isDEBAnalysis(analysis: FileAnalysis): analysis is DEBAnalysis {
   return 'Format' in analysis && analysis.Format === 'DEB';
+}
+
+export function isRPMAnalysis(analysis: FileAnalysis): analysis is RPMAnalysis {
+  return 'Format' in analysis && analysis.Format === 'RPM';
 }
 
 export function isAnalysisError(analysis: FileAnalysis): analysis is AnalysisError {
