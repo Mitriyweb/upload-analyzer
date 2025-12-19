@@ -1,10 +1,8 @@
 # Capability: MSI File Analysis
 
-## Overview
+## Purpose
 Provides analysis of Microsoft Installer (MSI) files using Compound File Binary (CFB) format parsing. Extracts package metadata, product information, and installation properties.
-
 ## Requirements
-
 ### Requirement: MSI File Detection
 The system SHALL detect and identify MSI file format from binary data.
 
@@ -17,15 +15,11 @@ The system SHALL detect and identify MSI file format from binary data.
 - **THEN** return error indicating invalid MSI format
 
 ### Requirement: Product Information Extraction
-The system SHALL extract product metadata from MSI database.
+The system SHALL extract product metadata from the MSI internal database.
 
-#### Scenario: Standard MSI package
-- **WHEN** MSI file contains Property table with product info
-- **THEN** extract ProductName, Manufacturer, ProductVersion, ProductCode
-
-#### Scenario: Missing product properties
-- **WHEN** MSI file lacks standard property table entries
-- **THEN** return null or empty values for missing properties
+#### Scenario: Structured Property Extraction
+- **WHEN** an MSI file contains a `Property` table
+- **THEN** extract `ProductCode`, `UpgradeCode`, `ProductName`, `ProductVersion`, and `Manufacturer` directly from the table rows.
 
 ### Requirement: Package Architecture Detection
 The system SHALL identify target platform architecture from MSI metadata.
@@ -98,15 +92,11 @@ The system SHALL extract upgrade and related codes from MSI.
 - **THEN** extract related product codes and version ranges
 
 ### Requirement: Summary Information
-The system SHALL parse MSI summary information stream.
+The system SHALL parse the MSI summary information stream using structured OLE property parsing.
 
-#### Scenario: Summary stream present
-- **WHEN** MSI contains \x05SummaryInformation stream
-- **THEN** extract title, subject, author, keywords, comments
-
-#### Scenario: Creation timestamp
-- **WHEN** summary information contains creation time
-- **THEN** return formatted creation date
+#### Scenario: Comprehensive Summary Information
+- **WHEN** an MSI file contains a `SummaryInformation` stream
+- **THEN** extract all standard OLE properties including Title, Author, Keywords, and Revision Number (Package Code).
 
 ### Requirement: Error Handling
 The system SHALL provide clear error messages for MSI analysis failures.
@@ -118,6 +108,13 @@ The system SHALL provide clear error messages for MSI analysis failures.
 #### Scenario: Encrypted MSI
 - **WHEN** MSI file is encrypted or password-protected
 - **THEN** return error indicating encryption
+
+### Requirement: Installer Framework Detection (Improved)
+The system SHALL identify the installer framework based on property markers.
+
+#### Scenario: WiX Detection
+- **WHEN** the `Property` table contains WiX-specific properties or the `SummaryInformation` matches WiX patterns
+- **THEN** set `InstallerFramework` to "WiX Toolset"
 
 ## Data Structures
 

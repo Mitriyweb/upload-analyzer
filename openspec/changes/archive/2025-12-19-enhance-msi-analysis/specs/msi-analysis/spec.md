@@ -5,16 +5,21 @@ Enhances the MSI analysis to extract structured metadata directly from the inter
 
 ## MODIFIED Requirements
 
-### Requirement: MSI Metadata Extraction
-The system SHALL extract metadata from the MSI internal database.
+### Requirement: Product Information Extraction
+The system SHALL extract product metadata from the MSI internal database.
 
 #### Scenario: Structured Property Extraction
 - **WHEN** an MSI file contains a `Property` table
 - **THEN** extract `ProductCode`, `UpgradeCode`, `ProductName`, `ProductVersion`, and `Manufacturer` directly from the table rows.
 
+### Requirement: Summary Information
+The system SHALL parse the MSI summary information stream using structured OLE property parsing.
+
 #### Scenario: Comprehensive Summary Information
 - **WHEN** an MSI file contains a `SummaryInformation` stream
 - **THEN** extract all standard OLE properties including Title, Author, Keywords, and Revision Number (Package Code).
+
+## ADDED Requirements
 
 ### Requirement: Installer Framework Detection (Improved)
 The system SHALL identify the installer framework based on property markers.
