@@ -58,6 +58,12 @@ This document lists all file formats currently supported by the Upload Analyzer.
 
 **TypeScript Interface:** `MSIAnalysis`
 
+**Planned Enhancements:**
+- Structured parsing of the internal `Property` table (replacing heuristic scanning).
+- Extraction of `PackageCode` from OLE Revision Number.
+- Inventory counts (File, Component, Feature tables).
+- System requirements from `LaunchCondition` table.
+
 **Documentation:** See main README.md
 
 ---
@@ -148,13 +154,16 @@ See `ARCHITECTURE.md` for detailed implementation guide.
 
 ### Metadata Completeness
 
+| Feature | PE | MSI | DMG | DEB | RPM |
+|---------|----|----|-----|-----|-----|
 | Product Name | ✅ | ✅ | ⚠️ Limited | ✅ | ✅ |
 | Version | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Company/Vendor | ✅ | ✅ | ❌ | ✅ | ✅ |
 | Architecture | ✅ | ⚠️ Package | ⚠️ Image | ✅ | ✅ |
 | Digital Signature | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Compression Info | ❌ | ❌ | ✅ | ❌ | ❌ |
-| GUIDs | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Package Code | ❌ | ⚠️ Planned | ❌ | ❌ | ❌ |
+| Inventory Counts | ❌ | ⚠️ Planned | ❌ | ❌ | ❌ |
+| Requirements | ❌ | ⚠️ Planned | ❌ | ❌ | ❌ |
 
 ### Performance
 
@@ -162,6 +171,8 @@ See `ARCHITECTURE.md` for detailed implementation guide.
 |--------|----------------|-------------|
 | MSI | ⚡ Very Fast (8 bytes) | 🚀 Fast |
 | DMG | ⚡ Very Fast (pattern) | 🚀 Fast |
+| DEB | ⚡ Very Fast (pattern) | 🚀 Fast |
+| RPM | ⚡ Very Fast (pattern) | 🚀 Fast |
 | PE | ⚠️ Moderate (goblin) | ⚠️ Moderate |
 
 ## TypeScript Type Guards
@@ -169,7 +180,7 @@ See `ARCHITECTURE.md` for detailed implementation guide.
 All formats have corresponding type guard functions:
 
 ```typescript
-import { isPEAnalysis, isMSIAnalysis, isDMGAnalysis, isAnalysisError } from 'upload-analyzer/helpers';
+import { isPEAnalysis, isMSIAnalysis, isDMGAnalysis, isDEBAnalysis, isRPMAnalysis, isAnalysisError } from 'upload-analyzer/helpers';
 
 if (isPEAnalysis(analysis)) {
   // analysis is PEAnalysis
@@ -217,10 +228,3 @@ Potential future additions:
 
 - **v0.1.0** - Initial release (PE, MSI)
 - **v0.1.1** - Added DMG support
-
----
-
-For implementation details, see:
-- `ARCHITECTURE.md` - System architecture and trait design
-- `DMG_SUPPORT.md` - DMG-specific implementation details
-- `README.md` - Usage examples and API documentation

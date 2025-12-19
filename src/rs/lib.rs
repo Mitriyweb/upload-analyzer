@@ -43,7 +43,7 @@ fn parse_metadata(buf: &[u8]) -> MetadataResult {
 
     match obj {
         Object::PE(_) => pe::PEAnalyzer::parse_metadata(buf),
-        _ => Err("Unsupported file format. Only PE, MSI, and DMG files are supported.".to_string())
+        _ => Err("Unsupported file format. Supported formats: PE, MSI, DMG, DEB, RPM.".to_string())
     }
 }
 
