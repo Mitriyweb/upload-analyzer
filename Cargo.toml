@@ -65,6 +65,9 @@ mutex_atomic = "deny"
 # Deny complex types (including generics)
 type_complexity = "deny"
 
+[package.metadata.cargo-machete]
+ignored = ["serde", "web-sys"]
+
 [profile.release]
 opt-level = "z"
 lto = true

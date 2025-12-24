@@ -64,6 +64,10 @@ Upload Analyzer is a WebAssembly-powered binary file analyzer that provides deta
 ### Testing Strategy
 - Clippy lints run on all code (`npm run lint:rust`)
 - ESLint for TypeScript (`npm run lint:ts`)
+- Knip for dead code detection (`npm run lint:knip`)
+- cargo-machete for unused dependencies (`npm run lint:rust:deps`)
+- Full lint suite: `npm run lint`
+- Pre-commit hooks enforce all lints automatically
 - Manual testing via dev/production servers
 - Type safety validated at compile time
 

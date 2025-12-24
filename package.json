@@ -1,6 +1,6 @@
 {
   "name": "upload-analyzer",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "PE/MSI/DMG file analyzer compiled to WebAssembly with TypeScript support",
   "main": "pkg/upload_analyzer.js",
   "types": "src/ts/types/index.d.ts",
@@ -32,11 +32,13 @@
     "bundle": "npm run build:web && cp pkg/upload_analyzer_bg.wasm public/ && node scripts/bundle-single.js",
     "dev": "npm run build:web && http-server . -p 8888 -c-1 -o /dev/",
     "serve": "http-server public -p 8888 -c-1",
-    "lint": "npm run lint:rust && npm run lint:ts",
+    "lint": "npm run lint:rust && npm run lint:ts && npm run lint:knip && npm run lint:rust:deps",
     "lint:rust": "cargo clippy --all-targets --all-features -- -D warnings",
     "lint:rust:fix": "cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged",
+    "lint:rust:deps": "cargo machete",
     "lint:ts": "eslint src/ts",
     "lint:ts:fix": "eslint src/ts --fix",
+    "lint:knip": "knip",
     "prepublishOnly": "npm run build",
     "prek:install": "npx prek install",
     "prek:run": "npx prek run --all-files",
@@ -70,14 +72,17 @@
     "esbuild": "0.25.12",
     "eslint": "9.27.0",
     "http-server": "14.1.0",
+    "knip": "^5.76.3",
     "terser": "5.31.1",
     "typescript": "5.3.3",
-    "typescript-eslint": "8.32.1"
+    "typescript-eslint": "8.32.1",
+    "@j178/prek": "0.2.24"
   },
   "engines": {
     "node": ">=25.2.0"
   },
-  "dependencies": {
-    "@j178/prek": "0.2.22"
+  "overrides": {
+    "axios": "1.13.2",
+    "glob": "11.1.0"
   }
 }

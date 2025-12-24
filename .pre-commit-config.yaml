@@ -13,5 +13,25 @@ repos:
     hooks:
       - id: eslint
         name: ESLint
-        entry: npm run lint
+        entry: npm run lint:ts
         language: system
+        files: \.ts$
+        pass_filenames: false
+      - id: knip
+        name: Knip (dead code detection)
+        entry: npm run lint:knip
+        language: system
+        files: \.(ts|js)$
+        pass_filenames: false
+      - id: cargo-machete
+        name: cargo-machete (unused dependencies)
+        entry: cargo machete
+        language: system
+        files: Cargo\.toml$
+        pass_filenames: false
+      - id: npm-audit
+        name: npm audit (security vulnerabilities)
+        entry: bash -c 'echo "Running audit..." && npm audit --audit-level=high'
+        language: system
+        pass_filenames: false
+        always_run: true

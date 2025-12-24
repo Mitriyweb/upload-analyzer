@@ -1,0 +1,23 @@
+{
+    "$schema": "https://unpkg.com/knip@5/schema.json",
+    "entry": [
+        "src/ts/helpers.ts",
+        "pkg/upload_analyzer.js",
+        "scripts/**/*.js"
+    ],
+    "project": [
+        "src/ts/**/*.ts",
+        "scripts/**/*.js"
+    ],
+    "ignore": [
+        "pkg/**",
+        "dist/**",
+        "public/**",
+        "src/ts/examples/**"
+    ],
+    "ignoreDependencies": [
+        "http-server",
+        "esbuild",
+        "terser"
+    ]
+}

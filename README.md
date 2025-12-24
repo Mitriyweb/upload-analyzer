@@ -63,6 +63,67 @@ npm run serve
 
 Opens at `http://localhost:8888/public/` with optimized code.
 
+## Code Quality \u0026 Linting
+
+The project uses automated tools to maintain code quality and detect dead code:
+
+### Linting Commands
+
+```bash
+# Run all lints (Rust clippy, TypeScript ESLint, Knip, cargo-machete)
+npm run lint
+
+# Individual linters
+npm run lint:rust          # Rust clippy
+npm run lint:ts            # TypeScript ESLint
+npm run lint:knip          # Dead code detection (TypeScript/JavaScript)
+npm run lint:rust:deps     # Unused dependencies (Rust)
+```
+
+### Dead Code Detection
+
+**Knip** (TypeScript/JavaScript):
+- Detects unused files, exports, dependencies, and types
+- Configuration: `knip.json`
+- Ignores: generated files (`pkg/`, `dist/`), examples
+
+**cargo-machete** (Rust):
+- Detects unused Rust dependencies in `Cargo.toml`
+- Configuration: `[package.metadata.cargo-machete]` in `Cargo.toml`
+- Install globally: `cargo install cargo-machete`
+
+### Pre-commit Hooks
+
+Pre-commit hooks automatically run linters before commits:
+
+```bash
+# Install hooks (runs automatically after npm install)
+npm run prek:install
+
+# Run hooks manually on all files
+npm run prek:run
+
+# Bypass hooks (use sparingly)
+git commit --no-verify
+```
+
+### Handling False Positives
+
+**Knip**: Add to `knip.json`:
+```json
+{
+  "ignoreDependencies": ["package-name"],
+  "ignore": ["path/to/file/**"]
+}
+```
+
+**cargo-machete**: Add to `Cargo.toml`:
+```toml
+[package.metadata.cargo-machete]
+ignored = ["crate-name"]
+```
+
+
 ## Project Structure
 
 ```text
