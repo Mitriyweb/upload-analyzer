@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+
 pub mod deb_test;
 pub mod dmg_test;
 pub mod msi_test;

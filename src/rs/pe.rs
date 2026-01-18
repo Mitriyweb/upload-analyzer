@@ -57,7 +57,7 @@ fn parse_pe_metadata(buf: &[u8], pe: &PE) -> MetadataResult {
     Ok(meta)
 }
 
-fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
+pub(crate) fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
     // Helper to check if a pattern exists in buffer
     let contains_pattern = |pattern: &[u8]| -> bool { find_bytes(buf, pattern).is_some() };
 
@@ -118,7 +118,7 @@ fn extract_embedded_msi_metadata(
     }
 }
 
-fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
+pub(crate) fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
     let patterns = [(b"O=" as &[u8], 2), (b"CN=" as &[u8], 3)];
 
     for (pattern_bytes, pattern_len) in patterns.iter() {
