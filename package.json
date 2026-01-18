@@ -39,6 +39,7 @@
     "lint:rust:deps": "cargo machete",
     "lint:ts": "eslint src/ts",
     "lint:ts:fix": "eslint src/ts --fix",
+    "test:ts": "tsx --test src/test/ts/*.test.ts",
     "lint:knip": "knip",
     "prepublishOnly": "npm run build",
     "prek:install": "npx prek install",
@@ -69,15 +70,16 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "9.27.0",
+    "@j178/prek": "0.2.24",
     "@types/node": "22.14.0",
     "esbuild": "0.25.12",
     "eslint": "9.27.0",
     "http-server": "14.1.0",
     "knip": "^5.76.3",
     "terser": "5.31.1",
+    "tsx": "^4.21.0",
     "typescript": "5.3.3",
-    "typescript-eslint": "8.32.1",
-    "@j178/prek": "0.2.24"
+    "typescript-eslint": "8.32.1"
   },
   "engines": {
     "node": ">=25.2.0"
