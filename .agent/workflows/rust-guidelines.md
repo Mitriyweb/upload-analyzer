@@ -8,11 +8,11 @@ enforcement: clippy
 version: 1.0
 ---
 
-<!-- 
+<!--
   AI AGENT GUIDELINES
   This file contains mandatory coding standards for AI agents working on Rust code.
   These rules are enforced by clippy linter configured in Cargo.toml and clippy.toml
-  
+
   IDE Integration:
   - This file is part of the .agent/workflows directory
   - AI agents must follow these rules when generating or modifying Rust code
@@ -633,19 +633,19 @@ pub struct Ticket {
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub enum TicketPriority { 
-    Low, 
-    Medium, 
-    High 
+pub enum TicketPriority {
+    Low,
+    Medium,
+    High
 }
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub enum TicketStatus { 
-    Open, 
-    InProgress, 
-    Resolved, 
-    Closed 
+pub enum TicketStatus {
+    Open,
+    InProgress,
+    Resolved,
+    Closed
 }
 ```
 
@@ -744,24 +744,24 @@ pub struct ListParams {
 
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct Envelope<T> { 
-    pub data: T, 
-    pub meta: Meta, 
-    pub links: Links 
+pub struct Envelope<T> {
+    pub data: T,
+    pub meta: Meta,
+    pub links: Links
 }
 
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct Meta { 
-    pub limit: u16, 
-    pub has_next: bool, 
-    pub has_prev: bool 
+pub struct Meta {
+    pub limit: u16,
+    pub has_next: bool,
+    pub has_prev: bool
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Links { 
-    pub next: Option<String>, 
-    pub prev: Option<String> 
+pub struct Links {
+    pub next: Option<String>,
+    pub prev: Option<String>
 }
 
 /// List tickets with cursor pagination
@@ -821,7 +821,7 @@ pub async fn create_ticket_idempotent(
     let idempotency_key = headers
         .get("idempotency-key")
         .and_then(|v| v.to_str().ok());
-    
+
     if let Some(key) = idempotency_key {
         // Check if request with this key was already processed
         if let Some(cached_response) = check_idempotency_cache(key).await {
@@ -830,20 +830,20 @@ pub async fn create_ticket_idempotent(
             return Ok((response_headers, Json(cached_response)));
         }
     }
-    
+
     // Process request normally
     let ticket = create_ticket_in_db(payload).await?;
-    
+
     // Compute and return ETag for concurrency control
     let etag = compute_etag(&ticket);
     let mut response_headers = HeaderMap::new();
     response_headers.insert("etag", etag.parse().unwrap());
-    
+
     // Cache response for idempotency
     if let Some(key) = idempotency_key {
         cache_idempotent_response(key, &ticket).await;
     }
-    
+
     Ok((response_headers, Json(ticket)))
 }
 
@@ -854,10 +854,10 @@ pub async fn update_ticket(
     Json(payload): Json<UpdateTicketRequest>,
 ) -> Result<Json<Ticket>, Problem> {
     let if_match = headers.get("if-match").and_then(|v| v.to_str().ok());
-    
+
     let current_ticket = get_ticket_by_id(id).await?;
     let current_etag = compute_etag(&current_ticket);
-    
+
     if let Some(client_etag) = if_match {
         if client_etag != current_etag {
             return Err(Problem {
@@ -871,7 +871,7 @@ pub async fn update_ticket(
             });
         }
     }
-    
+
     // Update ticket
     let updated_ticket = update_ticket_in_db(id, payload).await?;
     Ok(Json(updated_ticket))
@@ -897,7 +897,7 @@ pub struct Event {
     // Required timestamp - RFC3339 format
     #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
-    
+
     // Optional timestamp - RFC3339 format
     #[serde(with = "time::serde::rfc3339::option")]
     #[serde(default, skip_serializing_if = "Option::is_none")]

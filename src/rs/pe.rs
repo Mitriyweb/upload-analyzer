@@ -1,7 +1,11 @@
-use pelite::pe64::{Pe as Pe64, PeFile as PeFile64};
-use pelite::pe32::{Pe as Pe32, PeFile as PeFile32};
-use goblin::pe::PE;
 use std::collections::HashMap;
+
+use goblin::pe::PE;
+use pelite::{
+    pe32::{Pe as Pe32, PeFile as PeFile32},
+    pe64::{Pe as Pe64, PeFile as PeFile64},
+};
+
 use crate::{msi, FileAnalyzer, MetadataResult};
 
 // Constants for magic numbers and patterns
@@ -55,16 +59,15 @@ fn parse_pe_metadata(buf: &[u8], pe: &PE) -> MetadataResult {
 
 fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
     // Helper to check if a pattern exists in buffer
-    let contains_pattern = |pattern: &[u8]| -> bool {
-        find_bytes(buf, pattern).is_some()
-    };
+    let contains_pattern = |pattern: &[u8]| -> bool { find_bytes(buf, pattern).is_some() };
 
     // Check installer patterns efficiently without converting to String
     if contains_pattern(PATTERN_INNO_SETUP) || contains_pattern(PATTERN_INNO_VERSION) {
         meta.insert("InstallerType".to_string(), "Inno Setup".to_string());
     } else if contains_pattern(PATTERN_NSIS) || contains_pattern(PATTERN_NSIS_HEADER) {
         meta.insert("InstallerType".to_string(), "NSIS (Nullsoft)".to_string());
-    } else if contains_pattern(PATTERN_WINDOWS_INSTALLER) || contains_pattern(PATTERN_INSTALLSHIELD) {
+    } else if contains_pattern(PATTERN_WINDOWS_INSTALLER) || contains_pattern(PATTERN_INSTALLSHIELD)
+    {
         meta.insert("InstallerType".to_string(), "InstallShield".to_string());
     } else if contains_pattern(PATTERN_WIX) || contains_pattern(PATTERN_WIX_XML) {
         meta.insert("InstallerType".to_string(), "WiX Toolset".to_string());
@@ -86,7 +89,11 @@ fn detect_installer_type(buf: &[u8], meta: &mut HashMap<String, String>) {
     extract_signature_info(buf, meta);
 }
 
-fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashMap<String, String>) {
+fn extract_embedded_msi_metadata(
+    buf: &[u8],
+    msi_offset: usize,
+    meta: &mut HashMap<String, String>,
+) {
     if msi_offset >= buf.len() {
         return;
     }
@@ -112,10 +119,7 @@ fn extract_embedded_msi_metadata(buf: &[u8], msi_offset: usize, meta: &mut HashM
 }
 
 fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
-    let patterns = [
-        (b"O=" as &[u8], 2),
-        (b"CN=" as &[u8], 3),
-    ];
+    let patterns = [(b"O=" as &[u8], 2), (b"CN=" as &[u8], 3)];
 
     for (pattern_bytes, pattern_len) in patterns.iter() {
         if let Some(pos) = find_bytes(buf, pattern_bytes) {
@@ -141,7 +145,18 @@ fn extract_signature_info(buf: &[u8], meta: &mut HashMap<String, String>) {
                     if name.len() >= 3
                         && name.len() < 100
                         && name.chars().any(|c| c.is_alphabetic())
-                        && name.chars().filter(|c| c.is_alphanumeric() || c.is_whitespace() || *c == '.' || *c == '-' || *c == ',' || *c == '&').count() == name.len()
+                        && name
+                            .chars()
+                            .filter(|c| {
+                                c.is_alphanumeric()
+                                    || c.is_whitespace()
+                                    || *c == '.'
+                                    || *c == '-'
+                                    || *c == ','
+                                    || *c == '&'
+                            })
+                            .count()
+                            == name.len()
                     {
                         meta.insert("SignedBy".into(), name.to_string());
                         return;
@@ -189,7 +204,8 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                         meta.insert("HasVersionInfo".into(), "true".into());
 
                         if let Some(fixed) = ver.fixed() {
-                            let file_version = format!("{}.{}.{}.{}",
+                            let file_version = format!(
+                                "{}.{}.{}.{}",
                                 fixed.dwFileVersion.Major,
                                 fixed.dwFileVersion.Minor,
                                 fixed.dwFileVersion.Patch,
@@ -197,7 +213,8 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             );
                             meta.insert("FileVersionNumber".into(), file_version);
 
-                            let product_version = format!("{}.{}.{}.{}",
+                            let product_version = format!(
+                                "{}.{}.{}.{}",
                                 fixed.dwProductVersion.Major,
                                 fixed.dwProductVersion.Minor,
                                 fixed.dwProductVersion.Patch,
@@ -232,7 +249,10 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             meta.insert(format!("StringsInTranslation_{}", idx), count.to_string());
                         }
 
-                        meta.insert("TotalCallbackCalls".into(), strings_per_lang.iter().sum::<usize>().to_string());
+                        meta.insert(
+                            "TotalCallbackCalls".into(),
+                            strings_per_lang.iter().sum::<usize>().to_string(),
+                        );
 
                         meta.insert("StringsCount".into(), all_strings.len().to_string());
 
@@ -243,8 +263,13 @@ fn extract_pe32_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
                             if let Some(company) = meta.get("CompanyName").cloned() {
-                                if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
-                                    meta.insert("CompanyName".into(), format!("{} (from digital signature)", company));
+                                if meta.contains_key("SignedBy")
+                                    && !company.contains("from digital signature")
+                                {
+                                    meta.insert(
+                                        "CompanyName".into(),
+                                        format!("{} (from digital signature)", company),
+                                    );
                                 }
                             }
                         }
@@ -293,7 +318,8 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                         meta.insert("HasVersionInfo".into(), "true".into());
 
                         if let Some(fixed) = ver.fixed() {
-                            let file_version = format!("{}.{}.{}.{}",
+                            let file_version = format!(
+                                "{}.{}.{}.{}",
                                 fixed.dwFileVersion.Major,
                                 fixed.dwFileVersion.Minor,
                                 fixed.dwFileVersion.Patch,
@@ -301,7 +327,8 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             );
                             meta.insert("FileVersionNumber".into(), file_version);
 
-                            let product_version = format!("{}.{}.{}.{}",
+                            let product_version = format!(
+                                "{}.{}.{}.{}",
                                 fixed.dwProductVersion.Major,
                                 fixed.dwProductVersion.Minor,
                                 fixed.dwProductVersion.Patch,
@@ -336,7 +363,10 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                             meta.insert(format!("StringsInTranslation_{}", idx), count.to_string());
                         }
 
-                        meta.insert("TotalCallbackCalls".into(), strings_per_lang.iter().sum::<usize>().to_string());
+                        meta.insert(
+                            "TotalCallbackCalls".into(),
+                            strings_per_lang.iter().sum::<usize>().to_string(),
+                        );
 
                         meta.insert("StringsCount".into(), all_strings.len().to_string());
 
@@ -347,8 +377,13 @@ fn extract_pe64_metadata(buf: &[u8], meta: &mut HashMap<String, String>) {
                         } else {
                             meta.insert("NoStringsFound".into(), "true".into());
                             if let Some(company) = meta.get("CompanyName").cloned() {
-                                if meta.contains_key("SignedBy") && !company.contains("from digital signature") {
-                                    meta.insert("CompanyName".into(), format!("{} (from digital signature)", company));
+                                if meta.contains_key("SignedBy")
+                                    && !company.contains("from digital signature")
+                                {
+                                    meta.insert(
+                                        "CompanyName".into(),
+                                        format!("{} (from digital signature)", company),
+                                    );
                                 }
                             }
                         }

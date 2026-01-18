@@ -36,6 +36,9 @@ jobs:
     - name: Run lint typescript
       run: pnpm run lint:ts
 
+    - name: Run Knip
+      run: pnpm run lint:knip
+
   validate-rust:
     name: Lint Rust
     runs-on: ubuntu-latest
@@ -59,8 +62,19 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
+
       - name: Run Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run Rust tests
+        run: cargo test --lib
+
+      - name: Run cargo-machete
+        run: |
+          cargo install cargo-machete
+          cargo machete
 
   build:
     name: Build WASM
@@ -106,4 +120,3 @@ jobs:
 
       - name: Build
         run: pnpm run build
-

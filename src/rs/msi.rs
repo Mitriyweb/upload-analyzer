@@ -1,6 +1,10 @@
-use std::collections::HashMap;
-use std::io::{Cursor, Read};
+use std::{
+    collections::HashMap,
+    io::{Cursor, Read},
+};
+
 use cfb::CompoundFile;
+
 use crate::{FileAnalyzer, MetadataResult};
 
 // Constants for MSI file analysis
@@ -107,7 +111,9 @@ fn parse_msi_metadata(buf: &[u8]) -> MetadataResult {
                             for row in reader.rows() {
                                 let key_idx = read_idx(row, 0, idx_size);
                                 let val_idx = read_idx(row, idx_size, idx_size);
-                                if let (Some(key), Some(val)) = (pool.get(key_idx), pool.get(val_idx)) {
+                                if let (Some(key), Some(val)) =
+                                    (pool.get(key_idx), pool.get(val_idx))
+                                {
                                     if !key.is_empty() && !val.is_empty() {
                                         meta.insert(key.clone(), val.clone());
                                     }
@@ -133,7 +139,7 @@ fn parse_msi_metadata(buf: &[u8]) -> MetadataResult {
                                         row[size_offset],
                                         row[size_offset + 1],
                                         row[size_offset + 2],
-                                        row[size_offset + 3]
+                                        row[size_offset + 3],
                                     ]) as u64;
                                     total_size += size;
                                 }
@@ -145,12 +151,18 @@ fn parse_msi_metadata(buf: &[u8]) -> MetadataResult {
                 "Component" => {
                     // Component row: 5 strings + 2 bytes
                     let row_size = (idx_size * 5) + 2;
-                    meta.insert("ComponentCount".into(), (entry.len() / (row_size as u64)).to_string());
+                    meta.insert(
+                        "ComponentCount".into(),
+                        (entry.len() / (row_size as u64)).to_string(),
+                    );
                 }
                 "Feature" => {
                     // Feature row: 5 strings + 6 bytes
                     let row_size = (idx_size * 5) + 6;
-                    meta.insert("FeatureCount".into(), (entry.len() / (row_size as u64)).to_string());
+                    meta.insert(
+                        "FeatureCount".into(),
+                        (entry.len() / (row_size as u64)).to_string(),
+                    );
                 }
                 "LaunchCondition" => {
                     if let Ok(mut stream) = cfb.open_stream(entry.path()) {
@@ -196,10 +208,10 @@ fn read_idx(data: &[u8], offset: usize, size: usize) -> usize {
     match size {
         2 => u16::from_le_bytes([data[offset], data[offset + 1]]) as usize,
         3 => {
-            (data[offset] as usize) |
-            ((data[offset + 1] as usize) << 8) |
-            ((data[offset + 2] as usize) << 16)
-        },
+            (data[offset] as usize)
+                | ((data[offset + 1] as usize) << 8)
+                | ((data[offset + 2] as usize) << 16)
+        }
         _ => 0,
     }
 }
@@ -214,13 +226,17 @@ fn extract_summary_info_enhanced(cfb: &mut CfbFile, meta: &mut HashMap<String, S
 }
 
 fn get_u32(buf: &[u8], offset: usize) -> u32 {
-    if offset + 4 > buf.len() { return 0; }
-    u32::from_le_bytes([buf[offset], buf[offset+1], buf[offset+2], buf[offset+3]])
+    if offset + 4 > buf.len() {
+        return 0;
+    }
+    u32::from_le_bytes([buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]])
 }
 
 fn get_u16(buf: &[u8], offset: usize) -> u16 {
-    if offset + 2 > buf.len() { return 0; }
-    u16::from_le_bytes([buf[offset], buf[offset+1]])
+    if offset + 2 > buf.len() {
+        return 0;
+    }
+    u16::from_le_bytes([buf[offset], buf[offset + 1]])
 }
 
 fn extract_ole_properties(buffer: &[u8], meta: &mut HashMap<String, String>) {
@@ -229,32 +245,43 @@ fn extract_ole_properties(buffer: &[u8], meta: &mut HashMap<String, String>) {
     }
 
     let num_sections = get_u32(buffer, 24);
-    if num_sections == 0 { return; }
+    if num_sections == 0 {
+        return;
+    }
 
     let section_offset = get_u32(buffer, 44) as usize;
-    if section_offset + 8 > buffer.len() { return; }
+    if section_offset + 8 > buffer.len() {
+        return;
+    }
 
     let section_size = get_u32(buffer, section_offset) as usize;
     let prop_count = get_u32(buffer, section_offset + 4) as usize;
 
-    if section_offset + section_size > buffer.len() { return; }
+    if section_offset + section_size > buffer.len() {
+        return;
+    }
 
     let entry_base = section_offset + 8;
     for i in 0..prop_count {
         let entry_offset = entry_base + (i * 8);
-        if entry_offset + 8 > buffer.len() { break; }
+        if entry_offset + 8 > buffer.len() {
+            break;
+        }
 
         let pid = get_u32(buffer, entry_offset);
         let prop_offset = get_u32(buffer, entry_offset + 4) as usize;
         let abs_prop_offset = section_offset + prop_offset;
 
-        if abs_prop_offset + 4 > buffer.len() { continue; }
+        if abs_prop_offset + 4 > buffer.len() {
+            continue;
+        }
 
         let prop_type = get_u16(buffer, abs_prop_offset);
 
         match pid {
             2 | 3 | 4 | 5 | 6 | 9 => {
-                let s = if prop_type == 30 { // VT_LPSTR
+                let s = if prop_type == 30 {
+                    // VT_LPSTR
                     let str_len = get_u32(buffer, abs_prop_offset + 4) as usize;
                     let str_start = abs_prop_offset + 8;
                     if str_start + str_len <= buffer.len() {
@@ -264,7 +291,8 @@ fn extract_ole_properties(buffer: &[u8], meta: &mut HashMap<String, String>) {
                     } else {
                         continue;
                     }
-                } else if prop_type == 31 { // VT_LPWSTR (UTF-16)
+                } else if prop_type == 31 {
+                    // VT_LPWSTR (UTF-16)
                     let str_chars = get_u32(buffer, abs_prop_offset + 4) as usize;
                     let str_start = abs_prop_offset + 8;
                     if str_start + (str_chars * 2) <= buffer.len() {
@@ -282,7 +310,9 @@ fn extract_ole_properties(buffer: &[u8], meta: &mut HashMap<String, String>) {
                     continue;
                 };
 
-                if s.is_empty() { continue; }
+                if s.is_empty() {
+                    continue;
+                }
 
                 let key = match pid {
                     2 => "Title",
@@ -338,11 +368,21 @@ fn is_valid_metadata_string(s: &str) -> bool {
         }
     }
 
-    let valid_count = s.chars().filter(|c| {
-        c.is_alphanumeric() || c.is_whitespace() ||
-        *c == '.' || *c == '-' || *c == '_' || *c == ',' ||
-        *c == '(' || *c == ')' || *c == '&' || *c == '\''
-    }).count();
+    let valid_count = s
+        .chars()
+        .filter(|c| {
+            c.is_alphanumeric()
+                || c.is_whitespace()
+                || *c == '.'
+                || *c == '-'
+                || *c == '_'
+                || *c == ','
+                || *c == '('
+                || *c == ')'
+                || *c == '&'
+                || *c == '\''
+        })
+        .count();
 
     valid_count == s.len()
 }
@@ -425,15 +465,19 @@ fn extract_guid(data: &str, _prefix: &str) -> Option<String> {
 
 fn regex_like_guid_search(data: &[u8]) -> Option<String> {
     for i in 0..data.len().saturating_sub(38) {
-        if data[i] == b'{' && data[i + 37] == b'}'
-            && data[i + 9] == b'-' && data[i + 14] == b'-' &&
-               data[i + 19] == b'-' && data[i + 24] == b'-' {
-                if let Ok(guid) = std::str::from_utf8(&data[i..i+38]) {
-                    if guid.chars().all(|c| c.is_ascii_hexdigit() || c == '{' || c == '}' || c == '-') {
-                        return Some(guid.to_uppercase());
-                    }
+        if data[i] == b'{'
+            && data[i + 37] == b'}'
+            && data[i + 9] == b'-'
+            && data[i + 14] == b'-'
+            && data[i + 19] == b'-'
+            && data[i + 24] == b'-'
+        {
+            if let Ok(guid) = std::str::from_utf8(&data[i..i + 38]) {
+                if guid.chars().all(|c| c.is_ascii_hexdigit() || c == '{' || c == '}' || c == '-') {
+                    return Some(guid.to_uppercase());
                 }
             }
+        }
     }
     None
 }
@@ -457,10 +501,12 @@ fn extract_version_pattern(data: &str) -> Option<String> {
             }
 
             let parts: Vec<&str> = version.split('.').collect();
-            if parts.len() >= 2 && parts.len() <= 4
-                && parts.iter().all(|p| !p.is_empty() && p.parse::<u32>().is_ok()) {
-                    versions.push(version);
-                }
+            if parts.len() >= 2
+                && parts.len() <= 4
+                && parts.iter().all(|p| !p.is_empty() && p.parse::<u32>().is_ok())
+            {
+                versions.push(version);
+            }
         }
     }
 
@@ -495,7 +541,8 @@ impl MsiStringPool {
 
         for i in 0..n_entries {
             let offset = 4 + (i * 4);
-            let length = u16::from_le_bytes([pool_data[offset + 2], pool_data[offset + 3]]) as usize;
+            let length =
+                u16::from_le_bytes([pool_data[offset + 2], pool_data[offset + 3]]) as usize;
 
             if length == 0 {
                 strings.push(String::new());
@@ -506,9 +553,8 @@ impl MsiStringPool {
             if end <= string_data.len() {
                 let s_bytes = &string_data[current_offset..end];
                 let s = if codepage == 1200 {
-                    let utf16_data: Vec<u16> = s_bytes.chunks_exact(2)
-                        .map(|c| u16::from_le_bytes([c[0], c[1]]))
-                        .collect();
+                    let utf16_data: Vec<u16> =
+                        s_bytes.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect();
                     String::from_utf16_lossy(&utf16_data).to_string()
                 } else {
                     String::from_utf8_lossy(s_bytes).to_string()
@@ -585,7 +631,8 @@ mod msi_tests {
         // Entry 1: refcount 1, len 5
         // Entry 2: refcount 1, len 5
         let pool = vec![
-            0, 0, 0, 0, // Header (n_entries=0, flags=0) - n_entries is calculated from pool_data.len()
+            0, 0, 0,
+            0, // Header (n_entries=0, flags=0) - n_entries is calculated from pool_data.len()
             1, 0, 5, 0, // Entry 1: refcount 1, len 5
             1, 0, 5, 0, // Entry 2: refcount 1, len 5
         ];

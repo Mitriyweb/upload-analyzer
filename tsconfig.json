@@ -3,12 +3,12 @@
     /* Language and Environment */
     "target": "ES2020",
     "lib": ["ES2020"],
-    
+
     /* Modules */
     "module": "ES2020",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    
+
     /* Emit */
     "declaration": true,
     "declarationMap": true,
@@ -16,12 +16,12 @@
     "outDir": "./dist",
     "removeComments": true,
     "importHelpers": false,
-    
+
     /* Interop Constraints */
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    
+
     /* Type Checking */
     "strict": true,
     "noUnusedLocals": true,

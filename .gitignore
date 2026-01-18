@@ -7,5 +7,4 @@
 Cargo.lock
 *.log
 .DS_Store
-
-
+*.txt

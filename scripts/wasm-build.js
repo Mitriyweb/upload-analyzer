@@ -23,7 +23,7 @@ try {
 
 // Run wasm-pack build
 try {
-    execSync(`wasm-pack build --target ${target} --out-dir pkg`, { 
+    execSync(`wasm-pack build --target ${target} --out-dir pkg`, {
         stdio: 'inherit',
         cwd: path.join(__dirname, '..')
     });

@@ -2,15 +2,15 @@
  * Example usage of upload-analyzer TypeScript types
  */
 
-import type { 
-  UploadAnalyzerWASM, 
-  FileInfo, 
+import type {
+  UploadAnalyzerWASM,
+  FileInfo,
   FileAnalysis,
   PEAnalysis,
   MSIAnalysis
 } from 'upload-analyzer/types';
 
-import { 
+import {
   parseFileInfo,
   parseAnalysis,
   isPEAnalysis,
@@ -26,13 +26,13 @@ declare const wasm: UploadAnalyzerWASM;
 async function getBasicInfo(file: File): Promise<FileInfo> {
   const arrayBuffer = await file.arrayBuffer();
   const data = new Uint8Array(arrayBuffer);
-  
+
   const jsonResult = wasm.get_file_info(data);
   const fileInfo = JSON.parse(jsonResult) as FileInfo;
-  
+
   console.log(`File type: ${fileInfo.type}`);
   console.log(`File size: ${fileInfo.size} bytes`);
-  
+
   return fileInfo;
 }
 
@@ -41,16 +41,16 @@ async function getBasicInfo(file: File): Promise<FileInfo> {
 async function analyzePEFile(file: File): Promise<void> {
   const arrayBuffer = await file.arrayBuffer();
   const data = new Uint8Array(arrayBuffer);
-  
+
   const jsonResult = wasm.analyze_pe_file(data);
   const analysis = JSON.parse(jsonResult) as FileAnalysis;
-  
+
   // Check for errors
   if (isAnalysisError(analysis)) {
     console.error('Analysis failed:', analysis.error);
     return;
   }
-  
+
   // Type-safe handling based on format
   if (isPEAnalysis(analysis)) {
     console.log('PE File Analysis:');
@@ -59,15 +59,15 @@ async function analyzePEFile(file: File): Promise<void> {
     console.log('- Company Name:', analysis.CompanyName);
     console.log('- File Version:', analysis.FileVersionNumber);
     console.log('- Product Version:', analysis.ProductVersionNumber);
-    
+
     if (analysis.SignedBy) {
       console.log('- Digitally Signed By:', analysis.SignedBy);
     }
-    
+
     if (analysis.InstallerType) {
       console.log('- Installer Type:', analysis.InstallerType);
     }
-    
+
     if (analysis.EmbeddedMSI === 'true') {
       console.log('- Contains Embedded MSI at offset:', analysis.MSIOffset);
     }
@@ -78,7 +78,7 @@ async function analyzePEFile(file: File): Promise<void> {
     console.log('- Product Version:', analysis.ProductVersion);
     console.log('- Product Code:', analysis.ProductCode);
     console.log('- Upgrade Code:', analysis.UpgradeCode);
-    
+
     if (analysis.InstallerFramework) {
       console.log('- Created With:', analysis.InstallerFramework);
     }
@@ -95,7 +95,7 @@ function extractCompanyInfo(analysis: FileAnalysis): {
   if (isAnalysisError(analysis)) {
     return {};
   }
-  
+
   if (isPEAnalysis(analysis)) {
     return {
       company: analysis.CompanyName || analysis.Publisher || analysis.SignedBy,
@@ -103,7 +103,7 @@ function extractCompanyInfo(analysis: FileAnalysis): {
       version: analysis.ProductVersion || analysis.FileVersion || analysis.ProductVersionNumber
     };
   }
-  
+
   if (isMSIAnalysis(analysis)) {
     return {
       company: analysis.Manufacturer || analysis.CompanyName,
@@ -111,7 +111,7 @@ function extractCompanyInfo(analysis: FileAnalysis): {
       version: analysis.ProductVersion || analysis.Version
     };
   }
-  
+
   return {};
 }
 
@@ -120,18 +120,18 @@ function extractCompanyInfo(analysis: FileAnalysis): {
 async function detectAndAnalyze(file: File): Promise<void> {
   const arrayBuffer = await file.arrayBuffer();
   const data = new Uint8Array(arrayBuffer);
-  
+
   // First get basic file info
   const infoJson = wasm.get_file_info(data);
   const info = JSON.parse(infoJson) as FileInfo;
-  
+
   console.log(`Detected file type: ${info.type}`);
-  
+
   // Then perform detailed analysis
   if (info.type.includes('PE') || info.type.includes('MSI')) {
     const analysisJson = wasm.analyze_pe_file(data);
     const analysis = JSON.parse(analysisJson) as FileAnalysis;
-    
+
     if (!isAnalysisError(analysis)) {
       const companyInfo = extractCompanyInfo(analysis);
       console.log('Company Info:', companyInfo);
@@ -143,24 +143,24 @@ async function detectAndAnalyze(file: File): Promise<void> {
 
 function displayVersionInfo(analysis: PEAnalysis): string {
   const lines: string[] = [];
-  
+
   if (analysis.FileVersionNumber) {
     lines.push(`File Version: ${analysis.FileVersionNumber}`);
   }
-  
+
   if (analysis.ProductVersionNumber) {
     lines.push(`Product Version: ${analysis.ProductVersionNumber}`);
   }
-  
+
   if (analysis.CompanyName) {
     const source = analysis.NoStringsFound === 'true' ? ' (from digital signature)' : '';
     lines.push(`Company: ${analysis.CompanyName}${source}`);
   }
-  
+
   if (analysis.ProductName) {
     lines.push(`Product: ${analysis.ProductName}`);
   }
-  
+
   return lines.join('\n');
 }
 
@@ -169,24 +169,24 @@ function displayVersionInfo(analysis: PEAnalysis): string {
 function handleFileUpload(event: Event): void {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
-  
+
   if (!file) return;
-  
+
   const reader = new FileReader();
-  
+
   reader.onload = (e) => {
     const arrayBuffer = e.target?.result as ArrayBuffer;
     const data = new Uint8Array(arrayBuffer);
-    
+
     try {
       const analysisJson = wasm.analyze_pe_file(data);
       const analysis = JSON.parse(analysisJson) as FileAnalysis;
-      
+
       if (isAnalysisError(analysis)) {
         console.error('Analysis error:', analysis.error);
         return;
       }
-      
+
       if (isPEAnalysis(analysis)) {
         const versionInfo = displayVersionInfo(analysis);
         console.log(versionInfo);
@@ -195,7 +195,7 @@ function handleFileUpload(event: Event): void {
       console.error('Failed to analyze file:', error);
     }
   };
-  
+
   reader.readAsArrayBuffer(file);
 }
 

@@ -1,8 +1,9 @@
-use std::collections::HashMap;
-use std::io::Read;
+use std::{collections::HashMap, io::Read};
+
 use ar::Archive;
-use tar::Archive as TarArchive;
 use flate2::read::GzDecoder;
+use tar::Archive as TarArchive;
+
 use crate::{FileAnalyzer, MetadataResult};
 
 pub struct DEBAnalyzer;
@@ -24,9 +25,7 @@ impl FileAnalyzer for DEBAnalyzer {
         while let Some(entry_result) = archive.next_entry() {
             let entry = entry_result.map_err(|e| format!("Failed to read ar entry: {}", e))?;
             let header = entry.header();
-            let name = std::str::from_utf8(header.identifier())
-                .unwrap_or("")
-                .trim_end_matches('/');
+            let name = std::str::from_utf8(header.identifier()).unwrap_or("").trim_end_matches('/');
 
             if name.starts_with("control.tar") {
                 control_found = true;
@@ -37,13 +36,19 @@ impl FileAnalyzer for DEBAnalyzer {
                     let decoder = GzDecoder::new(entry);
                     let mut tar = TarArchive::new(decoder);
 
-                    for tar_entry_result in tar.entries().map_err(|e| format!("Failed to read tar entries: {}", e))? {
-                        let mut tar_entry = tar_entry_result.map_err(|e| format!("Failed to read tar entry: {}", e))?;
-                        let path = tar_entry.path().map_err(|e| format!("Failed to get tar path: {}", e))?;
+                    for tar_entry_result in
+                        tar.entries().map_err(|e| format!("Failed to read tar entries: {}", e))?
+                    {
+                        let mut tar_entry = tar_entry_result
+                            .map_err(|e| format!("Failed to read tar entry: {}", e))?;
+                        let path = tar_entry
+                            .path()
+                            .map_err(|e| format!("Failed to get tar path: {}", e))?;
 
                         if path.to_str() == Some("control") || path.to_str() == Some("./control") {
                             let mut control_content = String::new();
-                            tar_entry.read_to_string(&mut control_content)
+                            tar_entry
+                                .read_to_string(&mut control_content)
                                 .map_err(|e| format!("Failed to read control file: {}", e))?;
 
                             parse_control_file(&control_content, &mut meta);

@@ -1,11 +1,16 @@
+mod deb;
+mod dmg;
 mod msi;
 mod pe;
-mod dmg;
-mod deb;
 mod rpm;
 
-use goblin::Object;
+#[cfg(test)]
+#[path = "../test/rs/mod.rs"]
+mod test;
+
 use std::collections::HashMap;
+
+use goblin::Object;
 use wasm_bindgen::prelude::*;
 
 // Type alias to reduce complexity and improve readability
@@ -26,7 +31,6 @@ fn parse_metadata(buf: &[u8]) -> MetadataResult {
         return msi::MSIAnalyzer::parse_metadata(buf);
     }
 
-
     if dmg::is_dmg_file(buf) {
         return dmg::DMGAnalyzer::parse_metadata(buf);
     }
@@ -43,7 +47,7 @@ fn parse_metadata(buf: &[u8]) -> MetadataResult {
 
     match obj {
         Object::PE(_) => pe::PEAnalyzer::parse_metadata(buf),
-        _ => Err("Unsupported file format. Supported formats: PE, MSI, DMG, DEB, RPM.".to_string())
+        _ => Err("Unsupported file format. Supported formats: PE, MSI, DMG, DEB, RPM.".to_string()),
     }
 }
 
@@ -51,7 +55,7 @@ fn parse_metadata(buf: &[u8]) -> MetadataResult {
 pub fn analyze_file(data: &[u8]) -> String {
     match parse_metadata(data) {
         Ok(meta) => serde_json::to_string(&meta).unwrap_or_else(|_| "{}".to_string()),
-        Err(e) => format!("{{\"error\": \"{}\"}}", e)
+        Err(e) => format!("{{\"error\": \"{}\"}}", e),
     }
 }
 
@@ -89,6 +93,6 @@ pub fn get_file_info(data: &[u8]) -> String {
 pub fn analyze_pe_file(data: &[u8]) -> String {
     match parse_metadata(data) {
         Ok(meta) => serde_json::to_string(&meta).unwrap_or_else(|_| "{}".to_string()),
-        Err(e) => format!("{{\"error\": \"{}\"}}", e)
+        Err(e) => format!("{{\"error\": \"{}\"}}", e),
     }
 }

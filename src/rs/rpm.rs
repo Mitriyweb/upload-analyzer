@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use crate::{FileAnalyzer, MetadataResult};
 
 pub struct RPMAnalyzer;
@@ -32,7 +33,6 @@ impl FileAnalyzer for RPMAnalyzer {
         // The next structure is the Immutable Header
         parse_header_structure(data, offset, &mut meta)?;
 
-
         Ok(meta)
     }
 }
@@ -50,8 +50,18 @@ fn skip_header_structure(data: &[u8], offset: usize) -> Result<usize, String> {
         return Err("Invalid RPM Header magic".into());
     }
 
-    let index_count = u32::from_be_bytes([data[offset + 8], data[offset + 9], data[offset + 10], data[offset + 11]]) as usize;
-    let store_size = u32::from_be_bytes([data[offset + 12], data[offset + 13], data[offset + 14], data[offset + 15]]) as usize;
+    let index_count = u32::from_be_bytes([
+        data[offset + 8],
+        data[offset + 9],
+        data[offset + 10],
+        data[offset + 11],
+    ]) as usize;
+    let store_size = u32::from_be_bytes([
+        data[offset + 12],
+        data[offset + 13],
+        data[offset + 14],
+        data[offset + 15],
+    ]) as usize;
 
     let total_size = 16 + (index_count * 16) + store_size;
 
@@ -61,7 +71,11 @@ fn skip_header_structure(data: &[u8], offset: usize) -> Result<usize, String> {
     Ok(offset + padded_size)
 }
 
-fn parse_header_structure(data: &[u8], offset: usize, meta: &mut HashMap<String, String>) -> Result<(), String> {
+fn parse_header_structure(
+    data: &[u8],
+    offset: usize,
+    meta: &mut HashMap<String, String>,
+) -> Result<(), String> {
     if data.len() < offset + 16 {
         return Err("File too small for Immutable Header".into());
     }
@@ -70,8 +84,18 @@ fn parse_header_structure(data: &[u8], offset: usize, meta: &mut HashMap<String,
         return Err("Invalid RPM Immutable Header magic".into());
     }
 
-    let index_count = u32::from_be_bytes([data[offset + 8], data[offset + 9], data[offset + 10], data[offset + 11]]) as usize;
-    let store_size = u32::from_be_bytes([data[offset + 12], data[offset + 13], data[offset + 14], data[offset + 15]]) as usize;
+    let index_count = u32::from_be_bytes([
+        data[offset + 8],
+        data[offset + 9],
+        data[offset + 10],
+        data[offset + 11],
+    ]) as usize;
+    let store_size = u32::from_be_bytes([
+        data[offset + 12],
+        data[offset + 13],
+        data[offset + 14],
+        data[offset + 15],
+    ]) as usize;
 
     let index_start = offset + 16;
     let store_start = index_start + (index_count * 16);
@@ -82,60 +106,85 @@ fn parse_header_structure(data: &[u8], offset: usize, meta: &mut HashMap<String,
 
     for i in 0..index_count {
         let entry_offset = index_start + (i * 16);
-        let tag = u32::from_be_bytes([data[entry_offset], data[entry_offset + 1], data[entry_offset + 2], data[entry_offset + 3]]);
-        let _dtype = u32::from_be_bytes([data[entry_offset + 4], data[entry_offset + 5], data[entry_offset + 6], data[entry_offset + 7]]);
-        let offset = u32::from_be_bytes([data[entry_offset + 8], data[entry_offset + 9], data[entry_offset + 10], data[entry_offset + 11]]) as usize;
+        let tag = u32::from_be_bytes([
+            data[entry_offset],
+            data[entry_offset + 1],
+            data[entry_offset + 2],
+            data[entry_offset + 3],
+        ]);
+        let _dtype = u32::from_be_bytes([
+            data[entry_offset + 4],
+            data[entry_offset + 5],
+            data[entry_offset + 6],
+            data[entry_offset + 7],
+        ]);
+        let offset = u32::from_be_bytes([
+            data[entry_offset + 8],
+            data[entry_offset + 9],
+            data[entry_offset + 10],
+            data[entry_offset + 11],
+        ]) as usize;
         // let count = u32::from_be_bytes([data[entry_offset + 12], data[entry_offset + 13], data[entry_offset + 14], data[entry_offset + 15]]) as usize;
 
         let abs_offset = store_start + offset;
 
         match tag {
-            1000 => { // NAME
+            1000 => {
+                // NAME
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("ProductName".into(), s);
                 }
             }
-            1001 => { // VERSION
+            1001 => {
+                // VERSION
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("ProductVersion".into(), s);
                 }
             }
-            1002 => { // RELEASE
+            1002 => {
+                // RELEASE
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("Release".into(), s);
                 }
             }
-            1004 => { // SUMMARY
+            1004 => {
+                // SUMMARY
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("Description".into(), s);
                 }
             }
-            1011 => { // VENDOR
+            1011 => {
+                // VENDOR
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("Vendor".into(), s);
                 }
             }
-            1014 => { // LICENSE
+            1014 => {
+                // LICENSE
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("License".into(), s);
                 }
             }
-            1016 => { // GROUP
+            1016 => {
+                // GROUP
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("GroupName".into(), s);
                 }
             }
-            1020 => { // URL
+            1020 => {
+                // URL
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("Url".into(), s);
                 }
             }
-            1022 => { // ARCH
+            1022 => {
+                // ARCH
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("Architecture".into(), s);
                 }
             }
-            1044 => { // SOURCERPM
+            1044 => {
+                // SOURCERPM
                 if let Some(s) = read_string(data, abs_offset) {
                     meta.insert("SourceRpm".into(), s);
                 }

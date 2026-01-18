@@ -35,3 +35,27 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: rustfmt
+        name: rustfmt
+        entry: cargo fmt --all -- --check
+        language: system
+        files: \.rs$
+        pass_filenames: false
+      - id: clippy
+        name: clippy
+        entry: npm run lint:rust
+        language: system
+        files: \.rs$
+        pass_filenames: false
+      - id: rust-test
+        name: rust-test
+        entry: npm run test:rust
+        language: system
+        files: \.rs$
+        pass_filenames: false
+      - id: build
+        name: build
+        entry: npm run build
+        language: system
+        files: \.(rs|ts|js|json)$
+        pass_filenames: false

@@ -34,6 +34,7 @@
     "serve": "http-server public -p 8888 -c-1",
     "lint": "npm run lint:rust && npm run lint:ts && npm run lint:knip && npm run lint:rust:deps",
     "lint:rust": "cargo clippy --all-targets --all-features -- -D warnings",
+    "test:rust": "cargo test --lib",
     "lint:rust:fix": "cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged",
     "lint:rust:deps": "cargo machete",
     "lint:ts": "eslint src/ts",
