@@ -1,8 +1,8 @@
-use std::io::Write;
 use crate::deb::{is_deb_file, DEBAnalyzer};
 use crate::FileAnalyzer;
 use flate2::write::GzEncoder;
 use flate2::Compression;
+use std::io::Write;
 
 #[cfg(test)]
 mod tests {
