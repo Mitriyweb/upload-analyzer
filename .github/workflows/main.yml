@@ -36,6 +36,9 @@ jobs:
     - name: Run lint typescript
       run: pnpm run lint:ts
 
+    - name: Run tests
+      run: pnpm run test:ts
+
     - name: Run Knip
       run: pnpm run lint:knip
 
