@@ -13,7 +13,11 @@ describe('Parsers', () => {
   test('parseAnalysis parses valid PE analysis JSON', () => {
     const json = '{"Format": "PE", "Architecture": "x64", "CompanyName": "Test Corp"}';
     const analysis = parseAnalysis(json);
-    assert.strictEqual(analysis.Format, 'PE');
+    if ('Format' in analysis) {
+      assert.strictEqual(analysis.Format, 'PE');
+    } else {
+      assert.fail('Format should be in analysis');
+    }
     if ('CompanyName' in analysis) {
       assert.strictEqual(analysis.CompanyName, 'Test Corp');
     } else {

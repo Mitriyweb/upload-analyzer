@@ -27,7 +27,7 @@
   "scripts": {
     "build": "npm run build:wasm && npm run build:types",
     "build:wasm": "node scripts/wasm-build.js bundler",
-    "build:types": "tsc && mkdir -p dist/types && cp src/ts/types/index.d.ts dist/types/index.d.ts",
+    "build:types": "tsc -p tsconfig.build.json && mkdir -p dist/types && cp src/ts/types/index.d.ts dist/types/index.d.ts",
     "build:web": "node scripts/wasm-build.js web",
     "bundle": "npm run build:web && cp pkg/upload_analyzer_bg.wasm public/ && node scripts/bundle-single.js",
     "dev": "npm run build:web && http-server . -p 8888 -c-1 -o /dev/",
