@@ -7,6 +7,7 @@
     ],
     "project": [
         "src/ts/**/*.ts",
+        "src/test/ts/**/*.ts",
         "scripts/**/*.js"
     ],
     "ignore": [

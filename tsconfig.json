@@ -32,7 +32,7 @@
   },
   "include": [
     "src/ts/**/*",
-    "src/tests/ts/**/*"
+    "src/test/ts/**/*"
   ],
   "exclude": [
     "node_modules",
