@@ -27,7 +27,7 @@
   "scripts": {
     "build": "npm run build:wasm && npm run build:types",
     "build:wasm": "node scripts/wasm-build.js bundler",
-    "build:types": "tsc && mkdir -p dist/types && cp src/ts/types/index.d.ts dist/types/index.d.ts",
+    "build:types": "tsc -p tsconfig.build.json && mkdir -p dist/types && cp src/ts/types/index.d.ts dist/types/index.d.ts",
     "build:web": "node scripts/wasm-build.js web",
     "bundle": "npm run build:web && cp pkg/upload_analyzer_bg.wasm public/ && node scripts/bundle-single.js",
     "dev": "npm run build:web && http-server . -p 8888 -c-1 -o /dev/",
@@ -35,10 +35,11 @@
     "lint": "npm run lint:rust && npm run lint:ts && npm run lint:knip && npm run lint:rust:deps",
     "lint:rust": "cargo clippy --all-targets --all-features -- -D warnings",
     "test:rust": "cargo test --lib",
+    "test:ts": "node --import tsx --test src/test/ts/**/*.test.ts",
     "lint:rust:fix": "cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged",
     "lint:rust:deps": "cargo machete",
-    "lint:ts": "eslint src/ts",
-    "lint:ts:fix": "eslint src/ts --fix",
+    "lint:ts": "eslint src/ts src/test/ts",
+    "lint:ts:fix": "eslint src/ts src/test/ts --fix",
     "lint:knip": "knip",
     "prepublishOnly": "npm run build",
     "prek:install": "npx prek install",
@@ -69,21 +70,24 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "9.27.0",
+    "@j178/prek": "0.2.24",
     "@types/node": "22.14.0",
     "esbuild": "0.25.12",
     "eslint": "9.27.0",
     "http-server": "14.1.0",
     "knip": "^5.76.3",
     "terser": "5.31.1",
+    "tsx": "^4.21.0",
     "typescript": "5.3.3",
-    "typescript-eslint": "8.32.1",
-    "@j178/prek": "0.2.24"
+    "typescript-eslint": "8.32.1"
   },
   "engines": {
     "node": ">=25.2.0"
   },
-  "overrides": {
-    "axios": "1.13.2",
-    "glob": "11.1.0"
+  "pnpm": {
+    "overrides": {
+      "axios": "1.13.2",
+      "glob": "11.1.0"
+    }
   }
 }
