@@ -45,7 +45,7 @@ test('isRPMAnalysis identifies RPM format', () => {
 test('isAnalysisError identifies error response', () => {
   const analysis: FileAnalysis = { error: 'Failed to parse' };
   assert.strictEqual(isAnalysisError(analysis), true);
-  assert.strictEqual(isPEAnalysis(analysis as any), false);
+  assert.strictEqual(isPEAnalysis(analysis), false);
 });
 
 test('parseFileInfo parses JSON string', () => {

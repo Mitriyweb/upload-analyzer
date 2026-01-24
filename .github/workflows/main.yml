@@ -39,6 +39,9 @@ jobs:
     - name: Run Knip
       run: pnpm run lint:knip
 
+    - name: Run TypeScript tests
+      run: pnpm run test:ts
+
   validate-rust:
     name: Lint Rust
     runs-on: ubuntu-latest

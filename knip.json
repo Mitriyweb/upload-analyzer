@@ -2,11 +2,13 @@
     "$schema": "https://unpkg.com/knip@5/schema.json",
     "entry": [
         "src/ts/helpers.ts",
+        "src/test/ts/*.test.ts",
         "pkg/upload_analyzer.js",
         "scripts/**/*.js"
     ],
     "project": [
         "src/ts/**/*.ts",
+        "src/test/ts/**/*.ts",
         "scripts/**/*.js"
     ],
     "ignore": [
